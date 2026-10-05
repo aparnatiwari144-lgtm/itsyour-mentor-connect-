@@ -5,9 +5,10 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { ToastContainer } from '../common/ToastContainer';
+import { MentorOtpVerificationModal } from '../common/MentorOtpVerificationModal';
 
 export const AppLayout = ({ requiredRole }) => {
-  const { role } = useApp();
+  const { role, currentUser, logout } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Protected route check
@@ -17,6 +18,22 @@ export const AppLayout = ({ requiredRole }) => {
 
   if (requiredRole && role !== requiredRole) {
     return <Navigate to={role === 'mentor' ? '/mentor/dashboard' : '/student/dashboard'} replace />;
+  }
+
+  // Verification Gate: Unverified mentors cannot access mentor workspace until OTP verification
+  if (role === 'mentor' && currentUser && currentUser.emailVerified === false) {
+    return (
+      <div className="min-h-screen bg-[#FBE9EA] flex items-center justify-center p-4">
+        <ToastContainer />
+        <MentorOtpVerificationModal
+          email={currentUser.email}
+          onCancel={logout}
+          onSuccess={() => {
+            // AppContext state updates currentUser and re-renders layout
+          }}
+        />
+      </div>
+    );
   }
 
   return (

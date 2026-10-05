@@ -26,8 +26,13 @@ import {
   KeyRound,
   School,
   BookOpen,
-  HelpCircle
+  HelpCircle,
+  UserPlus,
+  Phone,
+  Building2,
+  BadgeCheck
 } from 'lucide-react';
+import { MentorOtpVerificationModal } from '../components/common/MentorOtpVerificationModal';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -45,7 +50,7 @@ export const LandingPage = () => {
 
   // Modal State
   const [modalRole, setModalRole] = useState(null); // 'student' | 'mentor' | null
-  const [authTab, setAuthTab] = useState('login'); // 'login' | 'signup'
+  const [authTab, setAuthTab] = useState('login'); // 'login' | 'signup' | 'otp-verification'
   const [showPassword, setShowPassword] = useState(false);
   const [staySignedIn, setStaySignedIn] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -69,14 +74,21 @@ export const LandingPage = () => {
   const [studentCollege, setStudentCollege] = useState('');
   const [studentStream, setStudentStream] = useState(STREAMS.PCM);
 
-  // Mentor Signup Fields
+  // Mentor Registration Fields (All Required by Spec)
   const [mentorName, setMentorName] = useState('');
-  const [mentorEmail, setMentorEmail] = useState('');
-  const [mentorPassword, setMentorPassword] = useState('');
+  const [mentorEmployeeId, setMentorEmployeeId] = useState('');
   const [mentorCollege, setMentorCollege] = useState('NITK Surathkal');
-  const [mentorBranch, setMentorBranch] = useState('');
-  const [mentorYear, setMentorYear] = useState('1st Year (2026 Batch)');
+  const [mentorDepartment, setMentorDepartment] = useState('Electronics & Communication');
+  const [mentorDesignation, setMentorDesignation] = useState('Senior Mentor / Research Scholar');
+  const [mentorEmail, setMentorEmail] = useState('');
+  const [mentorPhone, setMentorPhone] = useState('');
+  const [mentorPassword, setMentorPassword] = useState('');
+  const [mentorConfirmPassword, setMentorConfirmPassword] = useState('');
   const [mentorStream, setMentorStream] = useState(STREAMS.PCM);
+
+  // OTP Verification State
+  const [otpEmail, setOtpEmail] = useState('');
+  const [simulatedOtp, setSimulatedOtp] = useState('');
 
   const openStudentModal = (initialTab = 'login') => {
     setModalRole('student');
@@ -151,12 +163,22 @@ export const LandingPage = () => {
     setErrorMessage('');
     setIsLoading(true);
     try {
-      await loginMentor({
+      const mentorUser = await loginMentor({
         email: loginEmail,
         password: loginPassword,
         staySignedIn
       });
-      navigate('/mentor/dashboard');
+      if (mentorUser.needsVerification || mentorUser.emailVerified === false) {
+        setOtpEmail(mentorUser.email);
+        if (mentorUser.generatedOtp) {
+          setSimulatedOtp(mentorUser.generatedOtp);
+        }
+        setAuthTab('otp-verification');
+        setErrorMessage('');
+        setSuccessMessage('A verification OTP has been sent to your college email address.');
+      } else {
+        navigate('/mentor/dashboard');
+      }
     } catch (err) {
       setErrorMessage(err.message || 'Mentor login failed.');
     } finally {
@@ -164,24 +186,36 @@ export const LandingPage = () => {
     }
   };
 
-  // Mentor Sign Up Handler
+  // Mentor Registration Handler (Triggers 6-Digit College Email OTP)
   const handleMentorSignup = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (mentorPassword !== mentorConfirmPassword) {
+      setErrorMessage('Passwords do not match. Please verify your passwords match.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signupMentor({
-        name: mentorName,
-        email: mentorEmail,
-        password: mentorPassword,
+      const res = await signupMentor({
+        fullName: mentorName,
+        mentorId: mentorEmployeeId,
         college: mentorCollege,
-        branch: mentorBranch || 'Engineering / Sciences',
-        year: mentorYear,
+        department: mentorDepartment,
+        designation: mentorDesignation,
+        collegeEmail: mentorEmail,
+        phone: mentorPhone,
+        password: mentorPassword,
+        confirmPassword: mentorConfirmPassword,
         stream: mentorStream
       });
-      navigate('/mentor/dashboard');
+      setOtpEmail(mentorEmail);
+      setSimulatedOtp(res.generatedOtp || '');
+      setAuthTab('otp-verification');
+      setSuccessMessage('A verification OTP has been sent to your college email address.');
     } catch (err) {
-      setErrorMessage(err.message || 'Mentor signup failed.');
+      setErrorMessage(err.message || 'Mentor registration failed.');
     } finally {
       setIsLoading(false);
     }
@@ -366,7 +400,16 @@ export const LandingPage = () => {
               <span className="text-xs font-bold text-brand-maroon flex items-center gap-1.5">
                 Sign In as Senior Mentor <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">13 Verified Mentors</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openMentorModal('signup');
+                }}
+                className="text-[11px] font-bold text-brand-rose hover:text-brand-maroon underline cursor-pointer"
+              >
+                New Mentor? Register Here
+              </button>
             </div>
           </div>
         </div>
@@ -434,61 +477,75 @@ export const LandingPage = () => {
       {/* Clay-Style Authentication Modal with Log In & Sign Up Tabs */}
       {modalRole && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white/95 rounded-[36px] p-6 sm:p-8 shadow-[0_20px_50px_rgba(122,21,48,0.2)] border border-white/80 max-h-[92vh] overflow-y-auto">
-            {/* Close button */}
-            <button
-              onClick={closeModal}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          {modalRole === 'mentor' && authTab === 'otp-verification' ? (
+            <MentorOtpVerificationModal
+              email={otpEmail}
+              initialSimulatedOtp={simulatedOtp}
+              onCancel={() => {
+                setAuthTab('login');
+                setErrorMessage('');
+              }}
+              onSuccess={() => {
+                closeModal();
+                navigate('/mentor/dashboard');
+              }}
+            />
+          ) : (
+            <div className="relative w-full max-w-lg bg-white/95 rounded-[36px] p-6 sm:p-8 shadow-[0_20px_50px_rgba(122,21,48,0.2)] border border-white/80 max-h-[92vh] overflow-y-auto">
+              {/* Close button */}
+              <button
+                onClick={closeModal}
+                className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            {/* Modal Heading & Icon */}
-            <div className="text-center mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white flex items-center justify-center mx-auto mb-2.5 shadow-[4px_6px_14px_rgba(179,38,62,0.25)]">
-                {modalRole === 'student' ? <GraduationCap className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
+              {/* Modal Heading & Icon */}
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white flex items-center justify-center mx-auto mb-2.5 shadow-[4px_6px_14px_rgba(179,38,62,0.25)]">
+                  {modalRole === 'student' ? <GraduationCap className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
+                </div>
+                <h2 className="text-xl font-black text-slate-900">
+                  {modalRole === 'student' ? 'Student Workspace' : 'Senior Mentor Portal'}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {modalRole === 'student'
+                    ? 'Sign in to access your personal study track, marks, and free trial session'
+                    : 'Institutional login for verified seniors from IITs, NITs & IISERs'}
+                </p>
               </div>
-              <h2 className="text-xl font-black text-slate-900">
-                {modalRole === 'student' ? 'Student Workspace' : 'Senior Mentor Portal'}
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {modalRole === 'student'
-                  ? 'Sign in to access your personal study track, marks, and free trial session'
-                  : 'Institutional login for verified seniors from IITs, NITs & IISERs'}
-              </p>
-            </div>
 
-            {/* Tabs: Log In / Sign Up */}
-            <div className="flex p-1 bg-slate-100 rounded-2xl mb-5">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthTab('login');
-                  setErrorMessage('');
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  authTab === 'login'
-                    ? 'bg-white text-brand-maroon shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                Log In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthTab('signup');
-                  setErrorMessage('');
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  authTab === 'signup'
-                    ? 'bg-white text-brand-maroon shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
+              {/* Tabs: Log In / Sign Up */}
+              <div className="flex p-1 bg-slate-100 rounded-2xl mb-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab('login');
+                    setErrorMessage('');
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                    authTab === 'login'
+                      ? 'bg-white text-brand-maroon shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Log In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab('signup');
+                    setErrorMessage('');
+                  }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                    authTab === 'signup'
+                      ? 'bg-white text-brand-maroon shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {modalRole === 'mentor' ? 'Register' : 'Sign Up'}
+                </button>
+              </div>
 
             {/* Error Message Alert */}
             {errorMessage && (
@@ -883,63 +940,175 @@ export const LandingPage = () => {
                       <ArrowRight className="w-4 h-4" />
                     </button>
 
-                    <div className="pt-3 border-t border-rose-100 flex items-center justify-between text-xs text-slate-500">
-                      <span>New verified senior?</span>
+                    {/* New Mentor? Register Here Option */}
+                    <div className="mt-3 p-3 rounded-2xl bg-[#FFF6F7] border border-rose-200 text-center">
+                      <p className="text-[11px] text-slate-600 mb-1 font-medium">
+                        First time institutional mentor?
+                      </p>
                       <button
                         type="button"
                         onClick={() => {
                           setAuthTab('signup');
                           setErrorMessage('');
                         }}
-                        className="font-bold text-brand-maroon hover:underline cursor-pointer"
+                        className="clay-btn-secondary w-full py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-brand-maroon"
                       >
-                        Register college email →
+                        <UserPlus className="w-3.5 h-3.5 text-brand-rose" />
+                        <span>New Mentor? Register Here</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-3 border-t border-rose-100 flex items-center justify-between text-xs text-slate-500">
+                      <span>New Mentor?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('signup');
+                          setErrorMessage('');
+                        }}
+                        className="font-bold text-brand-maroon hover:underline cursor-pointer flex items-center gap-1"
+                      >
+                        Register Here →
                       </button>
                     </div>
                   </form>
                 )}
 
-                {/* 2. Mentor Sign Up */}
+                {/* 2. Mentor Sign Up / Registration */}
                 {authTab === 'signup' && (
                   <form onSubmit={handleMentorSignup} className="space-y-3.5">
-                    <div className="px-3.5 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
-                      <strong>Requirement:</strong> Mentors must register using an official institutional college email domain (e.g. @nitk.edu.in, @iiserkol.ac.in, @iitb.ac.in).
+                    <div className="px-3.5 py-2.5 rounded-2xl bg-rose-50/80 border border-rose-200 text-[11px] text-brand-maroon">
+                      <div className="flex items-center gap-1.5 font-bold mb-0.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-brand-rose" />
+                        <span>Institutional Verification Enforced</span>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed">
+                        Register with your official college credentials. A 6-digit OTP will be sent to your college email to verify your mentor status.
+                      </p>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={mentorName}
-                        onChange={(e) => setMentorName(e.target.value)}
-                        required
-                        placeholder="e.g. Siddharth Rao"
-                        className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                      />
-                    </div>
-
+                    {/* Row 1: Full Name & Mentor ID */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Verified College Email
+                          Full Name *
                         </label>
                         <input
-                          type="email"
-                          value={mentorEmail}
-                          onChange={(e) => setMentorEmail(e.target.value)}
+                          type="text"
+                          value={mentorName}
+                          onChange={(e) => setMentorName(e.target.value)}
                           required
-                          placeholder="e.g. srao.261cs@nitk.edu.in"
+                          placeholder="e.g. Dr. Rajesh Kumar"
                           className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Password (min 6 chars)
+                          Mentor ID / Employee ID *
+                        </label>
+                        <input
+                          type="text"
+                          value={mentorEmployeeId}
+                          onChange={(e) => setMentorEmployeeId(e.target.value)}
+                          required
+                          placeholder="e.g. NITK-FAC-105"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 2: College / Institution Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        College / Institution Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={mentorCollege}
+                        onChange={(e) => setMentorCollege(e.target.value)}
+                        required
+                        placeholder="e.g. National Institute of Technology Karnataka (NITK)"
+                        className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                      />
+                    </div>
+
+                    {/* Row 3: Department & Designation */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Department *
+                        </label>
+                        <input
+                          type="text"
+                          value={mentorDepartment}
+                          onChange={(e) => setMentorDepartment(e.target.value)}
+                          required
+                          placeholder="e.g. Electronics & Communication"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Designation *
+                        </label>
+                        <input
+                          type="text"
+                          value={mentorDesignation}
+                          onChange={(e) => setMentorDesignation(e.target.value)}
+                          required
+                          placeholder="e.g. Assistant Professor / Senior Scholar"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 4: College Email ID & Phone Number */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          College Email ID (Official) *
                         </label>
                         <div className="relative">
+                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                          <input
+                            type="email"
+                            value={mentorEmail}
+                            onChange={(e) => setMentorEmail(e.target.value)}
+                            required
+                            placeholder="e.g. rkumar.fac@nitk.edu.in"
+                            className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Phone Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                          <input
+                            type="tel"
+                            value={mentorPhone}
+                            onChange={(e) => setMentorPhone(e.target.value)}
+                            required
+                            placeholder="e.g. +91 98765 43210"
+                            className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 5: Password & Confirm Password */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Password (min 6 chars) *
+                        </label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                           <input
                             type={showPassword ? 'text' : 'password'}
                             value={mentorPassword}
@@ -947,7 +1116,7 @@ export const LandingPage = () => {
                             required
                             minLength={6}
                             placeholder="Create password"
-                            className="w-full text-xs font-medium pl-3.5 pr-8 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                            className="w-full text-xs font-medium pl-10 pr-8 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
                           />
                           <button
                             type="button"
@@ -958,71 +1127,41 @@ export const LandingPage = () => {
                           </button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          College / Institute
-                        </label>
-                        <input
-                          type="text"
-                          value={mentorCollege}
-                          onChange={(e) => setMentorCollege(e.target.value)}
-                          required
-                          placeholder="e.g. NITK Surathkal / IISER Kolkata"
-                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                        />
-                      </div>
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Branch / Department
+                          Confirm Password *
                         </label>
-                        <input
-                          type="text"
-                          value={mentorBranch}
-                          onChange={(e) => setMentorBranch(e.target.value)}
-                          required
-                          placeholder="e.g. Computer Science / Physics"
-                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                        />
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={mentorConfirmPassword}
+                            onChange={(e) => setMentorConfirmPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            placeholder="Confirm password"
+                            className="w-full text-xs font-medium pl-10 pr-8 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Current Year
-                        </label>
-                        <select
-                          value={mentorYear}
-                          onChange={(e) => setMentorYear(e.target.value)}
-                          className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                        >
-                          <option value="1st Year (2026 Batch)">1st Year (2026 Batch)</option>
-                          <option value="2nd Year (2025 Batch)">2nd Year (2025 Batch)</option>
-                          <option value="3rd Year (2024 Batch)">3rd Year (2024 Batch)</option>
-                          <option value="Final Year (2023 Batch)">Final Year (2023 Batch)</option>
-                          <option value="Research Scholar / Alumni">Research Scholar / Alumni</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Primary Guidance Stream
-                        </label>
-                        <select
-                          value={mentorStream}
-                          onChange={(e) => setMentorStream(e.target.value)}
-                          className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                        >
-                          <option value={STREAMS.PCM}>Science (PCM)</option>
-                          <option value={STREAMS.PCB}>Science (PCB)</option>
-                          <option value={STREAMS.COMMERCE}>Commerce & Management</option>
-                          <option value={STREAMS.ARTS}>Arts & Humanities</option>
-                        </select>
-                      </div>
+                    {/* Primary Guidance Stream */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Primary Guidance Stream
+                      </label>
+                      <select
+                        value={mentorStream}
+                        onChange={(e) => setMentorStream(e.target.value)}
+                        className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                      >
+                        <option value={STREAMS.PCM}>Science (PCM) - Engineering & Technology</option>
+                        <option value={STREAMS.PCB}>Science (PCB) - Medicine & Research</option>
+                        <option value={STREAMS.COMMERCE}>Commerce & Management</option>
+                        <option value={STREAMS.ARTS}>Arts & Humanities</option>
+                      </select>
                     </div>
 
                     <button
@@ -1030,7 +1169,8 @@ export const LandingPage = () => {
                       disabled={isLoading}
                       className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                     >
-                      <span>{isLoading ? 'Verifying domain...' : 'Register as Senior Mentor'}</span>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>{isLoading ? 'Verifying college credentials...' : 'Register & Receive College Email OTP'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
 
@@ -1059,8 +1199,9 @@ export const LandingPage = () => {
               </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (

@@ -185,7 +185,7 @@ export const Navbar = ({ onToggleSidebar }) => {
                 ) : (
                   <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold shadow-2xs">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Verified Senior</span>
+                    <span>✓ Verified Mentor</span>
                   </div>
                 )}
               </div>

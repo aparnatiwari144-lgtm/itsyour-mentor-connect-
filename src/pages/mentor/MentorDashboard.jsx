@@ -76,7 +76,7 @@ export const MentorDashboard = () => {
                   : 'bg-amber-50 text-amber-800 border-amber-200'
               }`}>
                 <ShieldCheck className={`w-3.5 h-3.5 ${isVerified ? 'text-emerald-600' : 'text-amber-600'}`} />
-                <span>{isVerified ? `Verified Senior • ${currentMentor.collegeShort || currentMentor.college}` : 'Verification Pending'}</span>
+                <span>{isVerified ? `✓ Verified Mentor • ${currentMentor.collegeShort || currentMentor.college}` : 'Verification Pending'}</span>
               </span>
 
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFF1F3] text-brand-maroon text-xs font-bold border border-rose-200">

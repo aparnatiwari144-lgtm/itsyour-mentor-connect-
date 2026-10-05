@@ -20,6 +20,8 @@ import {
   registerStudentAccount,
   loginStudentAccount,
   registerMentorAccount,
+  verifyMentorOtp,
+  resendMentorOtp,
   loginMentorAccount,
   requestPasswordReset,
   confirmMentorEmailVerification,
@@ -345,12 +347,12 @@ export const AppProvider = ({ children }) => {
     return user;
   };
 
-  // Mentor Sign Up
-  const signupMentor = async ({ name, email, password, college, branch, year, stream }) => {
-    const mentorUser = await registerMentorAccount({ name, email, password, college, branch, year, stream });
+  // Mentor Sign Up (Triggers 6-Digit College Email OTP)
+  const signupMentor = async (mentorData) => {
+    const { user: mentorUser, generatedOtp } = await registerMentorAccount(mentorData);
     setCurrentUser(mentorUser);
 
-    // If new mentor is not in existing directory, add to directory
+    // If new mentor is not in existing directory, add to directory as unverified until OTP validated
     setMentors(prev => {
       const exists = prev.some(m => m.email?.toLowerCase() === mentorUser.email?.toLowerCase());
       if (exists) return prev;
@@ -361,11 +363,12 @@ export const AppProvider = ({ children }) => {
           initials: mentorUser.initials,
           college: mentorUser.college,
           collegeShort: mentorUser.college,
-          degree: 'B.Tech / Research Scholar',
-          branch: mentorUser.branch,
-          year: mentorUser.year,
+          degree: mentorUser.designation || 'Senior Mentor',
+          branch: mentorUser.department || mentorUser.branch || 'Engineering & Sciences',
+          year: mentorUser.year || 'Senior Scholar',
           email: mentorUser.email,
-          verified: mentorUser.emailVerified,
+          phone: mentorUser.phone,
+          verified: false,
           verificationMethod: `Verified via College Email (@${mentorUser.email.split('@')[1]})`,
           stream: mentorUser.stream,
           guidesStreams: [mentorUser.stream],
@@ -374,7 +377,7 @@ export const AppProvider = ({ children }) => {
           avatarBg: 'from-brand-rose to-brand-maroon',
           domains: ['Career Guidance', 'Study Planning', mentorUser.stream],
           expertise: ['Academic Mentorship', 'Curriculum Guidance', 'Time Management'],
-          bio: `Senior mentor at ${mentorUser.college}. Guiding aspiring students on entrance strategies, college transition, and roadmap planning.`,
+          bio: `Senior mentor at ${mentorUser.college} (${mentorUser.department || 'Academics'}).`,
           pricingNote: 'Free Trial eligible • Sample pricing thereafter',
           languages: ['English', 'Hindi'],
           availableSlots: [
@@ -387,21 +390,39 @@ export const AppProvider = ({ children }) => {
       ];
     });
 
-    loadUserData(mentorUser);
-    if (!mentorUser.emailVerified) {
-      addToast(`Mentor account registered! Please verify your college email link.`, 'info');
-    } else {
-      addToast(`Authenticated as Senior Mentor (${mentorUser.name})`, 'success');
-    }
-    return mentorUser;
+    addToast('A verification OTP has been sent to your college email address.', 'info');
+    return { user: mentorUser, generatedOtp };
+  };
+
+  // Verify College Email OTP
+  const verifyMentorOtpCode = async ({ email, otp }) => {
+    const verifiedUser = await verifyMentorOtp({ email, otp });
+    setCurrentUser(verifiedUser);
+    loadUserData(verifiedUser);
+    setMentors(prev =>
+      prev.map(m => (m.email?.toLowerCase() === verifiedUser.email?.toLowerCase() ? { ...m, verified: true } : m))
+    );
+    addToast('College email verified successfully. Your mentor account is now verified.', 'success');
+    return verifiedUser;
+  };
+
+  // Resend College Email OTP
+  const resendMentorOtpCode = async ({ email }) => {
+    const res = await resendMentorOtp({ email });
+    addToast('A verification OTP has been sent to your college email address.', 'info');
+    return res;
   };
 
   // Mentor Login
   const loginMentor = async ({ email, password, staySignedIn = true }) => {
     const mentorUser = await loginMentorAccount({ email, password, staySignedIn });
     setCurrentUser(mentorUser);
-    loadUserData(mentorUser);
-    addToast(`Logged in as Senior Mentor (${mentorUser.name})`, 'success');
+    if (!mentorUser.needsVerification) {
+      loadUserData(mentorUser);
+      addToast(`Logged in as Senior Mentor (${mentorUser.name})`, 'success');
+    } else {
+      addToast('Please complete college email OTP verification.', 'info');
+    }
     return mentorUser;
   };
 
@@ -881,6 +902,8 @@ export const AppProvider = ({ children }) => {
         loginStudent,
         signupMentor,
         loginMentor,
+        verifyMentorOtpCode,
+        resendMentorOtpCode,
         loginDemoStudent,
         verifyMentorEmail,
         resetPassword,
