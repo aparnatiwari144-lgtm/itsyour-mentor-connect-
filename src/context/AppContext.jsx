@@ -9,6 +9,14 @@ import {
   INITIAL_NOTIFICATIONS,
   SAMPLE_PRICING_PLANS
 } from '../data/mockData';
+import {
+  STREAMS,
+  STREAMS_LIST,
+  INITIAL_STREAM_NOTES,
+  INITIAL_RECORDED_SESSIONS,
+  INITIAL_MARKS,
+  INITIAL_STREAK_DATA
+} from '../data/streamsData';
 
 const AppContext = createContext(null);
 
@@ -23,6 +31,11 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : DEMO_STUDENT;
   });
 
+  // Stream state (Arts, Commerce, Science (PCM), Science (PCB))
+  const [selectedStream, setSelectedStreamState] = useState(() => {
+    return localStorage.getItem('iyapp_stream') || STREAMS.PCM;
+  });
+
   // Free Trial status for student (1 free trial session)
   const [hasUsedFreeTrial, setHasUsedFreeTrial] = useState(() => {
     return localStorage.getItem('iyapp_trial_used') === 'true';
@@ -32,10 +45,20 @@ export const AppProvider = ({ children }) => {
     return localStorage.getItem('iyapp_student_plan') || 'Free Trial';
   });
 
-  // Mentors state (allows updating mentor profiles and slots)
+  // Mentors state (Ensure all 13 mentors are available)
   const [mentors, setMentors] = useState(() => {
     const saved = localStorage.getItem('iyapp_mentors');
-    return saved ? JSON.parse(saved) : INITIAL_MENTORS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 13) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_MENTORS;
   });
 
   // Active mentor id for mentor view (default: mentor-1 Bhanu Kumar Pandey)
@@ -82,6 +105,54 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
   });
 
+  // Streak state
+  const [streakData, setStreakData] = useState(() => {
+    const saved = localStorage.getItem('iyapp_streak');
+    return saved ? JSON.parse(saved) : INITIAL_STREAK_DATA;
+  });
+
+  // Marks state
+  const [marksList, setMarksList] = useState(() => {
+    const saved = localStorage.getItem('iyapp_marks');
+    return saved ? JSON.parse(saved) : INITIAL_MARKS;
+  });
+
+  // Student Notes state
+  const [studentNotes, setStudentNotes] = useState(() => {
+    const saved = localStorage.getItem('iyapp_notes');
+    return saved ? JSON.parse(saved) : INITIAL_STREAM_NOTES;
+  });
+
+  // Recorded Sessions library
+  const [recordedSessions, setRecordedSessions] = useState(() => {
+    return INITIAL_RECORDED_SESSIONS;
+  });
+
+  // Quiz Results state
+  const [quizResults, setQuizResults] = useState(() => {
+    const saved = localStorage.getItem('iyapp_quizzes');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'res-1',
+        quizId: 'quiz-pcm-daily',
+        title: 'JEE Mechanics & Calculus High-Yield Drill',
+        score: 4,
+        totalQuestions: 4,
+        date: '2026-10-04',
+        percentage: 100
+      },
+      {
+        id: 'res-2',
+        quizId: 'quiz-pcm-algebra',
+        title: 'Matrices & Coordinate Geometry Drill',
+        score: 3,
+        totalQuestions: 4,
+        date: '2026-10-02',
+        percentage: 75
+      }
+    ];
+  });
+
   // Toast notification state
   const [toasts, setToasts] = useState([]);
 
@@ -93,6 +164,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('iyapp_student', JSON.stringify(studentUser));
   }, [studentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_stream', selectedStream);
+  }, [selectedStream]);
 
   useEffect(() => {
     localStorage.setItem('iyapp_trial_used', hasUsedFreeTrial ? 'true' : 'false');
@@ -134,6 +209,22 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('iyapp_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  useEffect(() => {
+    localStorage.setItem('iyapp_streak', JSON.stringify(streakData));
+  }, [streakData]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_marks', JSON.stringify(marksList));
+  }, [marksList]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_notes', JSON.stringify(studentNotes));
+  }, [studentNotes]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_quizzes', JSON.stringify(quizResults));
+  }, [quizResults]);
+
   // Toast helper
   const addToast = (message, type = 'success') => {
     const id = Date.now() + Math.random();
@@ -148,8 +239,12 @@ export const AppProvider = ({ children }) => {
   };
 
   // Auth actions
-  const loginAsStudent = () => {
+  const loginAsStudent = (optionalStream = null) => {
     setRole('student');
+    if (optionalStream) {
+      setSelectedStreamState(optionalStream);
+      setStudentUser(prev => ({ ...prev, stream: optionalStream }));
+    }
     addToast('Logged in as Aparna Tiwari (Student)', 'success');
   };
 
@@ -169,6 +264,94 @@ export const AppProvider = ({ children }) => {
   const logout = () => {
     setRole(null);
     addToast('Logged out successfully', 'info');
+  };
+
+  // Stream handler
+  const setSelectedStream = (stream) => {
+    setSelectedStreamState(stream);
+    setStudentUser(prev => ({ ...prev, stream }));
+    addToast(`Switched stream to ${stream}`, 'info');
+  };
+
+  // Streak action
+  const incrementStreak = (reason = 'Activity completed') => {
+    const today = new Date().toISOString().split('T')[0];
+    setStreakData(prev => {
+      const alreadyLoggedToday = prev.activeDates.includes(today);
+      const newActiveDates = alreadyLoggedToday ? prev.activeDates : [...prev.activeDates, today];
+      const newStreak = alreadyLoggedToday ? prev.currentStreak : prev.currentStreak + 1;
+      const longest = Math.max(newStreak, prev.longestStreak);
+
+      return {
+        ...prev,
+        currentStreak: newStreak,
+        longestStreak: longest,
+        lastActiveDate: today,
+        activeDates: newActiveDates
+      };
+    });
+    addToast(`🔥 Streak boosted! (+1 for ${reason})`, 'success');
+  };
+
+  // Marks actions
+  const addMarkEntry = (entry) => {
+    const newEntry = {
+      id: `mark-${Date.now()}`,
+      stream: selectedStream,
+      date: new Date().toISOString().split('T')[0],
+      percentage: Number(((entry.score / entry.totalMarks) * 100).toFixed(1)),
+      ...entry
+    };
+    setMarksList(prev => [newEntry, ...prev]);
+    incrementStreak('Recorded mock/school test marks');
+    addToast('Test score recorded successfully', 'success');
+  };
+
+  const deleteMarkEntry = (id) => {
+    setMarksList(prev => prev.filter(m => m.id !== id));
+    addToast('Test record deleted', 'info');
+  };
+
+  // Notes actions
+  const addNote = (note) => {
+    const newNote = {
+      id: `note-${Date.now()}`,
+      stream: selectedStream,
+      date: 'Just now',
+      readTime: '5 min read',
+      author: 'Aparna Tiwari (Self)',
+      ...note
+    };
+    setStudentNotes(prev => [newNote, ...prev]);
+    incrementStreak('Created revision notes');
+    addToast('Note added to your study repository', 'success');
+  };
+
+  const deleteNote = (id) => {
+    setStudentNotes(prev => prev.filter(n => n.id !== id));
+    addToast('Note removed', 'info');
+  };
+
+  const readNote = (id) => {
+    incrementStreak('Studied revision notes');
+  };
+
+  // Quiz submission action
+  const submitQuizResult = ({ quizId, title, score, totalQuestions, stream }) => {
+    const percentage = Number(((score / totalQuestions) * 100).toFixed(1));
+    const resultObj = {
+      id: `quiz-res-${Date.now()}`,
+      quizId,
+      title,
+      score,
+      totalQuestions,
+      percentage,
+      date: new Date().toISOString().split('T')[0],
+      stream: stream || selectedStream
+    };
+    setQuizResults(prev => [resultObj, ...prev]);
+    incrementStreak(`Scored ${score}/${totalQuestions} in Quiz`);
+    addToast(`Quiz submitted! You scored ${score}/${totalQuestions} (${percentage}%)`, 'success');
   };
 
   // Free trial handlers
@@ -200,139 +383,151 @@ export const AppProvider = ({ children }) => {
     }
 
     const newSession = {
-      id: `sess-${Date.now()}`,
+      id: `session-${Date.now()}`,
       mentorId,
-      mentorName: mentor ? mentor.name : 'Verified Mentor',
-      mentorCollege: mentor ? mentor.collegeShort : 'IIT/NIT',
-      mentorBranch: mentor ? mentor.branch : 'Engineering',
-      studentId: studentUser.id,
+      mentorName: mentor ? mentor.name : 'Verified Senior',
+      mentorCollege: mentor ? mentor.college : 'Premier Institute',
+      mentorCollegeShort: mentor ? mentor.collegeShort : 'IIT/NIT/IISER',
+      mentorInitials: mentor ? mentor.initials : 'VS',
+      mentorEmail: mentor ? mentor.email : 'mentor@institute.edu.in',
+      mentorAvatarBg: mentor ? mentor.avatarBg : 'from-rose-500 to-maroon',
+      mentorStream: mentor ? mentor.stream : selectedStream,
       studentName: studentUser.name,
       studentCollege: studentUser.college,
-      studentDegree: studentUser.degree,
+      studentInitials: studentUser.initials,
       date,
       time,
-      isoTime: new Date().toISOString(),
-      topic: topic || 'Guidance on Academics and Career',
-      doubtNotes: doubtNotes || 'Seeking senior insights on preparation and college journey.',
+      topic,
+      doubtNotes: doubtNotes || 'No specific doubt notes provided.',
       sessionType,
       status: 'upcoming',
-      roomCode: `iyapp-${Math.floor(1000 + Math.random() * 9000)}`,
-      isTrialSession: isTrial,
-      plan: isTrial ? 'Free Trial' : (planSelected || 'Single Session'),
-      review: null
+      roomLink: `/student/call/room-${Date.now().toString().slice(-6)}`,
+      createdAt: 'Just now',
+      isFreeTrial: isTrial,
+      planUsed: isTrial ? 'Free Trial (100% discount)' : (planSelected || 'Sample Plan')
     };
 
     setSessions(prev => [newSession, ...prev]);
 
-    // Also notify
+    // Boost streak on booking
+    incrementStreak('Booked mentorship session');
+
+    // Notify mentor
     const newNotif = {
       id: `notif-${Date.now()}`,
-      title: isTrial ? 'Free Trial Session Scheduled!' : 'Mentorship Session Confirmed!',
-      description: `Your session with ${newSession.mentorName} is scheduled for ${date} at ${time}.`,
-      timestamp: 'Just now',
+      title: 'New Session Booked',
+      description: `${studentUser.name} booked a session on "${topic}" for ${date} at ${time}.`,
+      time: 'Just now',
       read: false,
-      type: 'booking',
-      link: '/student/sessions'
+      type: 'session'
     };
     setNotifications(prev => [newNotif, ...prev]);
-    addToast(`Session booked with ${newSession.mentorName}!`, 'success');
+
+    addToast(
+      isTrial
+        ? 'Session Confirmed! 1st Free Trial Applied - ₹0'
+        : 'Session Confirmed! Mock payment successful.',
+      'success'
+    );
+
     return newSession;
   };
 
   const cancelSession = (sessionId, reason = 'Student requested cancellation') => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        return { ...s, status: 'cancelled', cancelReason: reason };
-      }
-      return s;
-    }));
+    setSessions(prev =>
+      prev.map(s => (s.id === sessionId ? { ...s, status: 'cancelled', cancelReason: reason } : s))
+    );
     addToast('Session cancelled', 'info');
   };
 
   const completeSession = (sessionId) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        return { ...s, status: 'completed' };
-      }
-      return s;
-    }));
-    addToast('Session marked as completed! You can now leave feedback.', 'success');
+    setSessions(prev =>
+      prev.map(s => (s.id === sessionId ? { ...s, status: 'completed' } : s))
+    );
+    incrementStreak('Attended 1:1 mentorship session');
+    addToast('Session marked as completed. You can leave written feedback.', 'success');
   };
 
-  // Submit written feedback (No ratings / No stars)
-  const submitSessionReview = (sessionId, reviewText) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        return { ...s, review: reviewText, status: 'completed' };
-      }
-      return s;
-    }));
-
-    // Add to mentor reviews
-    const session = sessions.find(s => s.id === sessionId);
-    if (session) {
-      setMentors(prev => prev.map(m => {
-        if (m.id === session.mentorId) {
-          const newReviews = [
-            {
-              id: `rev-${Date.now()}`,
-              studentName: studentUser.name,
-              college: studentUser.collegeShort,
-              date: 'Just now',
-              comment: reviewText
-            },
-            ...m.reviews
-          ];
-          return {
-            ...m,
-            reviewCount: m.reviewCount + 1,
-            reviews: newReviews
-          };
-        }
-        return m;
-      }));
-    }
-
-    addToast('Thank you! Your feedback has been submitted.', 'success');
+  // Written review submission without stars or ratings
+  const submitSessionReview = (sessionId, { writtenFeedback, mentorNotes = '' }) => {
+    setSessions(prev =>
+      prev.map(s =>
+        s.id === sessionId
+          ? {
+              ...s,
+              reviewed: true,
+              reviewComment: writtenFeedback,
+              studentFeedback: writtenFeedback,
+              mentorNotes
+            }
+          : s
+      )
+    );
+    incrementStreak('Submitted mentor feedback');
+    addToast('Thank you! Your feedback has been shared with the mentor.', 'success');
   };
 
-  // Mentor Request Actions
+  // Mentor Session Request Actions
   const acceptRequest = (sessionId) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        return { ...s, status: 'upcoming' };
-      }
-      return s;
-    }));
-    addToast('Session request accepted! Added to upcoming schedule.', 'success');
+    setSessions(prev =>
+      prev.map(s => (s.id === sessionId ? { ...s, status: 'upcoming' } : s))
+    );
+    addToast('Session request accepted', 'success');
   };
 
-  const declineRequest = (sessionId, note = 'Slot conflict') => {
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        return { ...s, status: 'cancelled', cancelReason: note };
-      }
-      return s;
-    }));
+  const declineRequest = (sessionId) => {
+    setSessions(prev =>
+      prev.map(s => (s.id === sessionId ? { ...s, status: 'cancelled', cancelReason: 'Mentor unavailable' } : s))
+    );
     addToast('Session request declined', 'info');
   };
 
-  // Task Actions (Student Planner)
-  const toggleTask = (taskId) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, done: !t.done } : t));
+  // Resource Upload
+  const uploadResource = ({ title, category, description, fileType = 'PDF', size = '2.4 MB', stream = null }) => {
+    const newResource = {
+      id: `res-${Date.now()}`,
+      title,
+      category,
+      description,
+      stream: stream || selectedStream,
+      fileType,
+      size,
+      author: role === 'mentor' ? currentMentor.name : studentUser.name,
+      authorCollege: role === 'mentor' ? currentMentor.collegeShort : studentUser.collegeShort,
+      downloads: 0,
+      createdAt: 'Just now'
+    };
+    setResources(prev => [newResource, ...prev]);
+    incrementStreak('Shared study roadmap/resource');
+    addToast(`Resource "${title}" uploaded`, 'success');
   };
 
-  const addTask = (title, category = 'Academics', priority = 'Medium') => {
-    if (!title.trim()) return;
+  // Planner Task Actions
+  const toggleTask = (taskId) => {
+    setTasks(prev =>
+      prev.map(t => {
+        if (t.id === taskId) {
+          const updatedCompleted = !t.completed;
+          if (updatedCompleted) {
+            incrementStreak('Completed study planner task');
+          }
+          return { ...t, completed: updatedCompleted };
+        }
+        return t;
+      })
+    );
+  };
+
+  const addTask = ({ title, domain, deadline }) => {
     const newTask = {
       id: `task-${Date.now()}`,
       title,
-      category,
-      done: false,
-      priority
+      domain: domain || 'General Study',
+      completed: false,
+      deadline: deadline || 'This week'
     };
     setTasks(prev => [...prev, newTask]);
-    addToast('New task added to your planner', 'success');
+    addToast('New roadmap goal added', 'success');
   };
 
   const deleteTask = (taskId) => {
@@ -341,68 +536,55 @@ export const AppProvider = ({ children }) => {
   };
 
   // Messaging Actions
-  const sendMessage = (targetMentorId, text, sender = 'student') => {
-    if (!text.trim()) return;
+  const sendMessage = ({ conversationId, text, sender = null }) => {
+    const activeSender = sender || (role === 'student' ? 'student' : 'mentor');
     const newMsg = {
       id: `msg-${Date.now()}`,
-      sender,
+      sender: activeSender,
       text,
-      timestamp: 'Just now',
-      avatar: sender === 'student' ? studentUser.initials : (mentors.find(m => m.id === targetMentorId)?.initials || 'ME')
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      read: true
     };
 
     setMessages(prev => {
-      const thread = prev[targetMentorId] || [];
+      const conv = prev[conversationId] || [];
       return {
         ...prev,
-        [targetMentorId]: [...thread, newMsg]
+        [conversationId]: [...conv, newMsg]
       };
     });
 
-    // Auto mentor reply simulation if student sent message
-    if (sender === 'student') {
+    // Simulated reply
+    if (activeSender === 'student') {
       setTimeout(() => {
-        const mentor = mentors.find(m => m.id === targetMentorId);
-        const autoReplies = [
-          `Thanks for reaching out! I've noted down your doubt and we'll dive deep into it in our session.`,
-          `Great question! I recommend reviewing the reference notes I uploaded under Resources as well.`,
-          `Got it! Let's connect during our scheduled slot. Feel free to bring any mock test results along.`
-        ];
-        const randomReply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
-        const mentorReply = {
+        const replyMsg = {
           id: `msg-${Date.now() + 1}`,
           sender: 'mentor',
-          text: randomReply,
-          timestamp: 'Just now',
-          avatar: mentor ? mentor.initials : 'M'
+          text: `Thanks for reaching out! I noted your doubt: "${text.slice(0, 35)}...". Let's cover this thoroughly in our call!`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          read: false
         };
-        setMessages(curr => ({
-          ...curr,
-          [targetMentorId]: [...(curr[targetMentorId] || []), mentorReply]
+        setMessages(innerPrev => ({
+          ...innerPrev,
+          [conversationId]: [...(innerPrev[conversationId] || []), replyMsg]
         }));
-        addToast(`New reply from ${mentor ? mentor.name : 'Mentor'}`, 'info');
       }, 1500);
     }
   };
 
-  // Resource Actions
-  const uploadResource = (resourceData) => {
-    const newRes = {
-      id: `res-${Date.now()}`,
-      downloads: 0,
-      pages: resourceData.pages || 10,
-      size: resourceData.size || '3.5 MB',
-      format: resourceData.format || 'PDF Document',
-      ...resourceData
-    };
-    setResources(prev => [newRes, ...prev]);
-    addToast(`"${newRes.title}" shared with students!`, 'success');
-    return newRes;
+  // Mentor Mentee Notes
+  const updateStudentNote = (studentId, noteText) => {
+    setMentorStudents(prev =>
+      prev.map(s => (s.id === studentId ? { ...s, privateNotes: noteText } : s))
+    );
+    addToast('Private mentee notes saved', 'success');
   };
 
-  // Notification Actions
+  // Notifications
   const markNotificationRead = (notifId) => {
-    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n));
+    setNotifications(prev =>
+      prev.map(n => (n.id === notifId ? { ...n, read: true } : n))
+    );
   };
 
   const markAllNotificationsRead = () => {
@@ -410,48 +592,56 @@ export const AppProvider = ({ children }) => {
     addToast('All notifications marked as read', 'info');
   };
 
-  // Update Mentor Private Note on a Student
-  const updateStudentNote = (studentId, notes) => {
-    setMentorStudents(prev => prev.map(s => s.id === studentId ? { ...s, privateNotes: notes } : s));
-    addToast('Student private note updated', 'success');
-  };
-
-  // Update Mentor Availability Slot
-  const addMentorSlot = (mentorId, slot) => {
-    setMentors(prev => prev.map(m => {
-      if (m.id === mentorId) {
-        return {
-          ...m,
-          availableSlots: [...m.availableSlots, { ...slot, id: `slot-${Date.now()}` }]
-        };
-      }
-      return m;
-    }));
-    addToast('New availability slot added', 'success');
+  // Mentor Slot Management
+  const addMentorSlot = (mentorId, { day, time }) => {
+    setMentors(prev =>
+      prev.map(m => {
+        if (m.id === mentorId) {
+          const newSlot = {
+            id: `slot-${Date.now()}`,
+            day,
+            time
+          };
+          return {
+            ...m,
+            availableSlots: [...(m.availableSlots || []), newSlot]
+          };
+        }
+        return m;
+      })
+    );
+    addToast(`Availability slot added for ${day} (${time})`, 'success');
   };
 
   const removeMentorSlot = (mentorId, slotId) => {
-    setMentors(prev => prev.map(m => {
-      if (m.id === mentorId) {
-        return {
-          ...m,
-          availableSlots: m.availableSlots.filter(s => s.id !== slotId)
-        };
-      }
-      return m;
-    }));
-    addToast('Slot removed', 'info');
+    setMentors(prev =>
+      prev.map(m => {
+        if (m.id === mentorId) {
+          return {
+            ...m,
+            availableSlots: (m.availableSlots || []).filter(s => s.id !== slotId)
+          };
+        }
+        return m;
+      })
+    );
+    addToast('Availability slot removed', 'info');
   };
 
-  // Update Mentor Profile
-  const updateMentorProfile = (mentorId, updatedData) => {
-    setMentors(prev => prev.map(m => m.id === mentorId ? { ...m, ...updatedData } : m));
-    addToast('Mentor profile successfully updated', 'success');
+  // Mentor Profile Update (supports stream change)
+  const updateMentorProfile = (mentorId, updatedFields) => {
+    setMentors(prev =>
+      prev.map(m => (m.id === mentorId ? { ...m, ...updatedFields } : m))
+    );
+    addToast('Mentor profile saved successfully', 'success');
   };
 
   // Update Student Profile
   const updateStudentProfile = (updatedData) => {
     setStudentUser(prev => ({ ...prev, ...updatedData }));
+    if (updatedData.stream) {
+      setSelectedStreamState(updatedData.stream);
+    }
     addToast('Profile changes saved', 'success');
   };
 
@@ -460,6 +650,7 @@ export const AppProvider = ({ children }) => {
     localStorage.clear();
     setMentors(INITIAL_MENTORS);
     setStudentUser(DEMO_STUDENT);
+    setSelectedStreamState(STREAMS.PCM);
     setActiveMentorId('mentor-1');
     setSessions(INITIAL_SESSIONS);
     setResources(INITIAL_RESOURCES);
@@ -467,6 +658,9 @@ export const AppProvider = ({ children }) => {
     setMessages(INITIAL_MESSAGES);
     setMentorStudents(INITIAL_MENTOR_STUDENTS);
     setNotifications(INITIAL_NOTIFICATIONS);
+    setStreakData(INITIAL_STREAK_DATA);
+    setMarksList(INITIAL_MARKS);
+    setStudentNotes(INITIAL_STREAM_NOTES);
     setHasUsedFreeTrial(false);
     setActivePlan('Free Trial');
     setRole('student');
@@ -482,6 +676,8 @@ export const AppProvider = ({ children }) => {
         setRole,
         studentUser,
         updateStudentProfile,
+        selectedStream,
+        setSelectedStream,
         hasUsedFreeTrial,
         markTrialAsUsed,
         activePlan,
@@ -518,6 +714,18 @@ export const AppProvider = ({ children }) => {
         removeMentorSlot,
         updateMentorProfile,
         resetAllData,
+        streakData,
+        incrementStreak,
+        marksList,
+        addMarkEntry,
+        deleteMarkEntry,
+        studentNotes,
+        addNote,
+        deleteNote,
+        readNote,
+        recordedSessions,
+        quizResults,
+        submitQuizResult,
         toasts,
         addToast,
         removeToast

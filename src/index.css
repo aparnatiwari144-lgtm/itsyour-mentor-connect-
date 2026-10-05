@@ -27,21 +27,141 @@
   background: #B3263E;
 }
 
-/* Glassmorphism and soft card styles */
-.card-glass {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(179, 38, 62, 0.08);
+/* 3D Claymorphism styles */
+.clay-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 32px;
+  box-shadow: 
+    10px 16px 28px -6px rgba(122, 21, 48, 0.07),
+    -8px -8px 20px 0px rgba(255, 255, 255, 0.95),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -3px -3px 6px 0px rgba(122, 21, 48, 0.03);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
-.glow-rose {
-  box-shadow: 0 0 25px -5px rgba(179, 38, 62, 0.25);
+.clay-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    12px 20px 32px -6px rgba(122, 21, 48, 0.1),
+    -10px -10px 24px 0px rgba(255, 255, 255, 1),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -3px -3px 6px 0px rgba(122, 21, 48, 0.03);
 }
 
-/* Pulse animation for live indicators */
+.clay-card-flat {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 32px;
+  box-shadow: 
+    10px 16px 28px -6px rgba(122, 21, 48, 0.07),
+    -8px -8px 20px 0px rgba(255, 255, 255, 0.95),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -3px -3px 6px 0px rgba(122, 21, 48, 0.03);
+}
+
+/* Clay Pastel Tiles */
+.clay-tile-pink {
+  background: #FDE8EA;
+  border-radius: 28px;
+  box-shadow: 
+    8px 12px 20px -4px rgba(179, 38, 62, 0.09),
+    -6px -6px 14px 0px rgba(255, 255, 255, 0.9),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px 0px rgba(179, 38, 62, 0.05);
+}
+
+.clay-tile-lavender {
+  background: #EFEAF8;
+  border-radius: 28px;
+  box-shadow: 
+    8px 12px 20px -4px rgba(120, 80, 180, 0.09),
+    -6px -6px 14px 0px rgba(255, 255, 255, 0.9),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px 0px rgba(120, 80, 180, 0.05);
+}
+
+.clay-tile-yellow {
+  background: #FFF8E3;
+  border-radius: 28px;
+  box-shadow: 
+    8px 12px 20px -4px rgba(190, 140, 20, 0.09),
+    -6px -6px 14px 0px rgba(255, 255, 255, 0.9),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px 0px rgba(190, 140, 20, 0.05);
+}
+
+.clay-tile-blue {
+  background: #EAF4FD;
+  border-radius: 28px;
+  box-shadow: 
+    8px 12px 20px -4px rgba(40, 120, 200, 0.09),
+    -6px -6px 14px 0px rgba(255, 255, 255, 0.9),
+    inset 2px 2px 4px 0px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px 0px rgba(40, 120, 200, 0.05);
+}
+
+/* Clay Button Primary */
+.clay-btn-primary {
+  background: linear-gradient(135deg, #B3263E, #7A1530);
+  border-radius: 9999px;
+  color: white;
+  box-shadow: 
+    6px 10px 20px -2px rgba(122, 21, 48, 0.3),
+    inset 1px 1px 2px 0px rgba(255, 255, 255, 0.4),
+    inset -2px -2px 4px 0px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.clay-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    8px 14px 24px -2px rgba(122, 21, 48, 0.38),
+    inset 1px 1px 2px 0px rgba(255, 255, 255, 0.5);
+}
+.clay-btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Clay Button Secondary */
+.clay-btn-secondary {
+  background: #FFFFFF;
+  border-radius: 9999px;
+  color: #7A1530;
+  box-shadow: 
+    4px 8px 16px -2px rgba(122, 21, 48, 0.08),
+    -4px -4px 10px 0px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 2px 0px rgba(255, 255, 255, 1);
+  transition: all 0.2s ease;
+}
+.clay-btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    6px 10px 20px -2px rgba(122, 21, 48, 0.12),
+    -5px -5px 12px 0px rgba(255, 255, 255, 1);
+}
+
+/* Active Nav Pill (Raised white pill in clay sidebar) */
+.clay-nav-active {
+  background: #FFFFFF !important;
+  border-radius: 9999px;
+  color: #7A1530 !important;
+  font-weight: 700;
+  box-shadow: 
+    4px 8px 16px -2px rgba(122, 21, 48, 0.1),
+    -4px -4px 10px 0px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 2px 0px rgba(255, 255, 255, 1);
+}
+
+/* Badge Glossy Effect */
+.clay-badge-gloss {
+  box-shadow: 
+    3px 5px 10px -2px rgba(0, 0, 0, 0.1),
+    inset 1px 1px 2px 0px rgba(255, 255, 255, 0.6),
+    inset -1px -1px 2px 0px rgba(0, 0, 0, 0.05);
+}
+
+/* Soft Pulse Animation */
 @keyframes softPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
+  50% { opacity: 0.85; transform: scale(1.04); }
 }
 
 .animate-soft-pulse {

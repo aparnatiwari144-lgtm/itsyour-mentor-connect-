@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Flame,
+  Award
 } from 'lucide-react';
 
 export const HeroDeviceMockup = () => {
@@ -19,139 +21,130 @@ export const HeroDeviceMockup = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-tr from-brand-rose/25 via-rose-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -top-6 -right-6 w-40 h-40 bg-pink-200/30 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Floating 3D-style decorative elements */}
-      <div className="absolute -top-3 left-4 z-20 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-white shadow-soft animate-bounce duration-1000 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+      {/* Floating 3D Clay decorative badge 1: Verified Email */}
+      <div className="absolute -top-3 left-4 z-20 bg-white/95 p-2.5 rounded-[22px] shadow-[6px_10px_20px_-4px_rgba(122,21,48,0.14),inset_1px_1px_2px_rgba(255,255,255,1)] border border-white flex items-center gap-2 transform -rotate-2 hover:rotate-0 transition-transform">
+        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-xs">
           <ShieldCheck className="w-4 h-4" />
         </div>
         <div className="text-[10px] text-left pr-1">
-          <p className="font-bold text-slate-800">Verified Email</p>
-          <p className="text-[9px] text-slate-500 font-mono">@iiserkol.ac.in</p>
+          <p className="font-bold text-slate-800">Verified Seniors</p>
+          <p className="text-[9px] text-brand-rose font-mono">@iiserkol.ac.in</p>
         </div>
       </div>
 
-      <div className="absolute -bottom-2 -left-3 z-20 bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border border-white shadow-soft flex items-center gap-2">
-        <div className="w-7 h-7 rounded-xl bg-brand-roseLight text-brand-rose flex items-center justify-center">
-          <Sparkles className="w-4 h-4" />
+      {/* Floating 3D Clay badge 2: Streak booster */}
+      <div className="absolute -bottom-3 -left-3 z-20 bg-white/95 p-2.5 rounded-[22px] shadow-[6px_10px_20px_-4px_rgba(122,21,48,0.14),inset_1px_1px_2px_rgba(255,255,255,1)] border border-white flex items-center gap-2 transform rotate-2 hover:rotate-0 transition-transform">
+        <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shadow-xs">
+          <Flame className="w-4 h-4" />
         </div>
         <div className="text-[10px] text-left pr-1">
-          <p className="font-bold text-slate-800">Free Trial Applied</p>
-          <p className="text-[9px] text-emerald-600 font-semibold">1st session on us</p>
+          <p className="font-bold text-slate-800">5-Day Streak 🔥</p>
+          <p className="text-[9px] text-emerald-600 font-semibold">Free Trial Applied</p>
         </div>
       </div>
 
-      <div className="absolute top-1/4 -right-4 z-20 bg-white/85 backdrop-blur-md p-2.5 rounded-2xl border border-white shadow-soft flex items-center gap-2">
-        <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
-          <Calendar className="w-4 h-4" />
+      {/* Floating 3D Clay badge 3: 4 Streams */}
+      <div className="absolute top-1/4 -right-4 z-20 bg-white/95 p-2.5 rounded-[22px] shadow-[6px_10px_20px_-4px_rgba(122,21,48,0.14),inset_1px_1px_2px_rgba(255,255,255,1)] border border-white flex items-center gap-2 transform -rotate-1 hover:rotate-0 transition-transform">
+        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-xs text-sm">
+          📚
         </div>
         <div className="text-[10px] text-left pr-1">
-          <p className="font-bold text-slate-800">1:1 Video Call</p>
-          <p className="text-[9px] text-brand-maroon font-semibold">Today • 6:00 PM</p>
+          <p className="font-bold text-slate-800">4 Streams</p>
+          <p className="text-[9px] text-brand-maroon font-semibold">PCM • PCB • Commerce • Arts</p>
         </div>
       </div>
 
-      {/* Main Laptop Mockup (Tilted Perspective) */}
-      <div className="relative mx-auto w-[90%] sm:w-[500px] rounded-3xl bg-slate-900 p-2.5 shadow-2xl border-4 border-slate-700/60 transform sm:-rotate-1 sm:hover:rotate-0 transition-transform duration-500">
+      {/* Main Laptop Mockup (Puffy Clay-Shell Perspective) */}
+      <div className="relative mx-auto w-[92%] sm:w-[510px] rounded-[32px] bg-slate-900 p-3 shadow-[0_25px_60px_-15px_rgba(122,21,48,0.25)] border-4 border-slate-700/60 transform sm:-rotate-1 sm:hover:rotate-0 transition-transform duration-500">
         {/* Laptop Screen Header */}
-        <div className="bg-slate-800 px-3 py-1.5 rounded-t-xl flex items-center justify-between text-[10px] text-slate-400">
+        <div className="bg-slate-800 px-3.5 py-1.5 rounded-t-[20px] flex items-center justify-between text-[10px] text-slate-400">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
           </div>
           <span className="font-mono text-[9px] text-slate-300">itsyourapp.org/student/dashboard</span>
-          <span className="text-[9px] text-emerald-400 font-semibold">● Live</span>
+          <span className="text-[9px] text-emerald-400 font-semibold flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+            Live Prototype
+          </span>
         </div>
 
-        {/* Laptop Screen Body: Real App UI Snippet */}
-        <div className="bg-[#FFF6F7] rounded-b-xl p-3 sm:p-4 text-slate-800 text-left overflow-hidden">
+        {/* Laptop Screen Body: Clay Dashboard UI Snippet */}
+        <div className="bg-[#FFF6F7] rounded-b-[20px] p-3 sm:p-4 text-slate-800 text-left overflow-hidden">
           {/* Dashboard Mini Header */}
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-rose-100">
+          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-rose-100">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-[9px] flex items-center justify-center">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-[9px] flex items-center justify-center shadow-xs">
                 AT
               </div>
               <div>
-                <p className="font-bold text-xs leading-none">Hi, Aparna!</p>
-                <p className="text-[9px] text-brand-rose font-medium">B.Tech CSE • ABES EC</p>
+                <p className="font-bold text-xs leading-none text-slate-900">Good Morning, Aparna!</p>
+                <p className="text-[9px] text-brand-rose font-medium mt-0.5">Stream: Science (PCM)</p>
               </div>
             </div>
-            <span className="text-[9px] bg-brand-rose text-white font-semibold px-2 py-0.5 rounded-full">
-              Free Trial Active
+            <span className="text-[9px] bg-brand-rose text-white font-semibold px-2 py-0.5 rounded-full shadow-xs">
+              1 Free Trial Available
             </span>
           </div>
 
-          {/* Mini Stat Cards */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-white/90 p-1.5 rounded-xl border border-rose-100 shadow-2xs text-center">
-              <p className="text-xs font-black text-brand-maroon">2</p>
-              <p className="text-[8px] text-slate-500">Upcoming</p>
+          {/* Mini 4 Pastel Clay Stat Cards */}
+          <div className="grid grid-cols-4 gap-1.5 mb-3">
+            <div className="bg-[#FDE8EA] p-1.5 rounded-2xl text-center shadow-2xs">
+              <p className="text-xs font-black text-brand-maroon">3</p>
+              <p className="text-[7.5px] text-slate-600 font-medium">Sessions</p>
             </div>
-            <div className="bg-white/90 p-1.5 rounded-xl border border-rose-100 shadow-2xs text-center">
-              <p className="text-xs font-black text-emerald-600">1</p>
-              <p className="text-[8px] text-slate-500">Completed</p>
+            <div className="bg-[#FFF8E3] p-1.5 rounded-2xl text-center shadow-2xs">
+              <p className="text-xs font-black text-amber-700">5d</p>
+              <p className="text-[7.5px] text-slate-600 font-medium">Streak 🔥</p>
             </div>
-            <div className="bg-white/90 p-1.5 rounded-xl border border-rose-100 shadow-2xs text-center">
-              <p className="text-xs font-black text-slate-800">5</p>
-              <p className="text-[8px] text-slate-500">Verified</p>
+            <div className="bg-[#EAF4FD] p-1.5 rounded-2xl text-center shadow-2xs">
+              <p className="text-xs font-black text-blue-700">8</p>
+              <p className="text-[7.5px] text-slate-600 font-medium">Notes</p>
+            </div>
+            <div className="bg-[#EFEAF8] p-1.5 rounded-2xl text-center shadow-2xs">
+              <p className="text-xs font-black text-purple-700">92%</p>
+              <p className="text-[7.5px] text-slate-600 font-medium">Quizzes</p>
             </div>
           </div>
 
-          {/* Live Call Alert Banner */}
-          <div className="bg-gradient-to-r from-brand-rose to-brand-maroon text-white p-2.5 rounded-xl flex items-center justify-between shadow-xs">
+          {/* Next Session Clay Card */}
+          <div className="bg-white/95 rounded-2xl p-2.5 shadow-2xs border border-rose-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-                <Video className="w-3.5 h-3.5 text-white" />
+              <div className="w-8 h-8 rounded-xl bg-brand-blush text-brand-rose flex items-center justify-center text-xs font-bold">
+                BP
               </div>
               <div>
-                <p className="font-bold text-[10px] leading-tight">Live: Bhanu Kumar Pandey</p>
-                <p className="text-[8px] text-rose-100">IISER Kolkata • 1:1 Guidance</p>
+                <p className="text-[10px] font-bold text-slate-900 leading-tight">
+                  Pure Science & IAT Strategy
+                </p>
+                <p className="text-[8.5px] text-slate-500">
+                  Bhanu Kumar Pandey • IISER Kolkata
+                </p>
               </div>
             </div>
-            <span className="text-[8px] font-bold bg-white text-brand-maroon px-2 py-0.5 rounded-full">
+            <span className="text-[8.5px] font-bold bg-brand-rose text-white px-2 py-1 rounded-full">
               Join Call
             </span>
           </div>
         </div>
       </div>
 
-      {/* Overlapping Phone Mockup (Video Call in Progress) */}
-      <div className="absolute -bottom-4 right-2 sm:right-6 w-36 sm:w-44 bg-slate-950 p-2 rounded-3xl border-4 border-slate-700 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500 z-30">
-        {/* Phone Notch */}
-        <div className="w-12 h-2.5 bg-slate-800 rounded-full mx-auto mb-1.5" />
-
-        {/* Video Call UI inside Phone */}
-        <div className="bg-slate-900 rounded-2xl p-2.5 text-center text-white flex flex-col justify-between h-48 sm:h-56 relative overflow-hidden">
-          {/* Video Timer */}
-          <div className="flex items-center justify-between text-[8px] text-slate-400">
-            <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-mono">
-              ● 14:22
-            </span>
-            <span className="text-[8px] text-slate-400">P2P HD</span>
+      {/* Mini Phone Video Call Mockup Floating on Right */}
+      <div className="hidden sm:block absolute -bottom-6 -right-6 w-44 rounded-[28px] bg-slate-900 p-2 shadow-[0_20px_40px_rgba(0,0,0,0.3)] border-2 border-slate-700 transform rotate-3 hover:rotate-0 transition-transform duration-300 z-30">
+        <div className="bg-slate-800 rounded-t-[20px] p-2 text-center text-white">
+          <p className="text-[8px] font-semibold text-rose-300">Live 1:1 Video Mentorship</p>
+          <p className="text-[10px] font-black truncate">Akash Patel (NITK)</p>
+        </div>
+        <div className="relative bg-slate-950 h-28 rounded-b-[20px] flex items-center justify-center overflow-hidden">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-xs flex items-center justify-center">
+            AP
           </div>
-
-          {/* Partner Avatar speaking */}
-          <div className="my-auto flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-rose to-brand-maroon flex items-center justify-center font-bold text-sm shadow-md border-2 border-emerald-400/80">
-              BP
-            </div>
-            <p className="text-[9px] font-bold text-white mt-1.5">Bhanu (IISER)</p>
-            <p className="text-[7px] text-rose-300">Speaking...</p>
-          </div>
-
-          {/* Self view pip */}
-          <div className="absolute bottom-10 right-2 w-10 h-10 rounded-xl bg-slate-800 border border-slate-600 flex items-center justify-center text-[8px] font-bold text-slate-300">
-            AT
-          </div>
-
-          {/* Mini Call Controls */}
-          <div className="flex items-center justify-center gap-1.5 pt-1 border-t border-slate-800">
-            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px]">
-              <Mic className="w-2.5 h-2.5 text-white" />
-            </span>
-            <span className="w-5 h-5 rounded-full bg-rose-600 flex items-center justify-center text-[8px]">
-              ✕
-            </span>
+          <span className="absolute bottom-2 left-2 text-[7px] bg-black/60 text-white px-1.5 py-0.5 rounded-full">
+            ECE Core & JEE
+          </span>
+          <div className="absolute bottom-2 right-2 w-6 h-6 rounded-lg bg-slate-800 text-white flex items-center justify-center">
+            <Mic className="w-3 h-3 text-emerald-400" />
           </div>
         </div>
       </div>

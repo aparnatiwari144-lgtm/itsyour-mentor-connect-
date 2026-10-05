@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { StreamPickerModal } from '../common/StreamPickerModal';
+import { STREAMS_LIST } from '../../data/streamsData';
 import {
   Bell,
   CheckCircle2,
@@ -9,12 +11,12 @@ import {
   User,
   Sliders,
   Sparkles,
-  RotateCcw,
   Menu,
-  GraduationCap,
   ShieldCheck,
+  Search,
+  BookOpen,
   Calendar,
-  BookOpen
+  Layers
 } from 'lucide-react';
 
 export const Navbar = ({ onToggleSidebar }) => {
@@ -29,8 +31,7 @@ export const Navbar = ({ onToggleSidebar }) => {
     unreadCount,
     markNotificationRead,
     markAllNotificationsRead,
-    loginAsStudent,
-    loginAsMentor,
+    selectedStream,
     logout,
     resetAllData
   } = useApp();
@@ -41,6 +42,8 @@ export const Navbar = ({ onToggleSidebar }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMentorSwitcher, setShowMentorSwitcher] = useState(false);
+  const [streamModalOpen, setStreamModalOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState('');
 
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -64,295 +67,354 @@ export const Navbar = ({ onToggleSidebar }) => {
   }, []);
 
   const isStudent = role === 'student';
-  const activeUser = isStudent ? studentUser : currentMentor;
+
+  // Compute page title
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path.includes('/dashboard')) return 'Dashboard';
+    if (path.includes('/my-mentors')) return 'My Mentors';
+    if (path.includes('/mentors')) return 'Find Mentors';
+    if (path.includes('/sessions')) return 'My Sessions';
+    if (path.includes('/recorded-sessions')) return 'Recorded Sessions';
+    if (path.includes('/notes')) return 'Study Notes';
+    if (path.includes('/quizzes')) return 'Daily Quizzes';
+    if (path.includes('/marks')) return 'Marks & Tests';
+    if (path.includes('/progress')) return 'Progress Tracker';
+    if (path.includes('/streak')) return 'Daily Streak';
+    if (path.includes('/resources')) return 'Study Resources';
+    if (path.includes('/planner')) return 'Study Roadmap';
+    if (path.includes('/messages')) return 'Messages';
+    if (path.includes('/billing')) return 'Plans & Billing';
+    if (path.includes('/profile')) return isStudent ? 'Settings & Profile' : 'Mentor Profile';
+    if (path.includes('/feedback') || path.includes('/reviews')) return 'Mentee Feedback';
+    if (path.includes('/availability')) return 'Availability Manager';
+    if (path.includes('/requests')) return 'Session Requests';
+    if (path.includes('/students')) return 'My Students';
+    if (path.includes('/verification')) return 'Verification Status';
+    return 'Dashboard';
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (navSearch.trim()) {
+      navigate(`/student/mentors?search=${encodeURIComponent(navSearch)}`);
+      setNavSearch('');
+    }
+  };
+
+  const activeStreamObj = STREAMS_LIST.find(s => s.id === selectedStream) || STREAMS_LIST[0];
 
   return (
-    <header className="sticky top-0 z-30 bg-white/75 backdrop-blur-xl border-b border-white/70 px-4 sm:px-6 py-3 shadow-2xs">
-      <div className="flex items-center justify-between gap-4">
-        {/* Left: Mobile hamburger & breadcrumb */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-xl text-brand-maroon hover:bg-white/80 transition-colors"
-            aria-label="Toggle menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+    <>
+      <StreamPickerModal
+        isOpen={streamModalOpen}
+        onClose={() => setStreamModalOpen(false)}
+      />
 
-          <div className="hidden sm:flex items-center gap-2 text-xs">
-            <span className="font-semibold text-brand-rose uppercase tracking-wider">
-              {isStudent ? 'Student Track' : 'Mentor Track'}
-            </span>
-            <span className="text-rose-300">•</span>
-            <span className="text-slate-600 font-medium">
-              {isStudent ? studentUser.collegeShort : currentMentor.collegeShort}
-            </span>
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-white/80 px-4 sm:px-6 py-3 shadow-2xs">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          {/* Left: Mobile hamburger & Big "Dashboard" Title */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2 rounded-2xl bg-white shadow-soft text-brand-maroon hover:bg-rose-50 transition-colors cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-none">
+                {getPageTitle()}
+              </h1>
+              <p className="text-[10px] text-slate-500 font-medium hidden sm:block mt-0.5">
+                {isStudent
+                  ? `Welcome, ${studentUser.name} • ${selectedStream}`
+                  : `Senior Mentor Workspace • ${currentMentor.collegeShort}`}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Center / Right Controls */}
-        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-          {/* Switch Demo Mentor dropdown (Visible in Mentor track or as quick switcher) */}
-          {role === 'mentor' && (
-            <div className="relative" ref={mentorSwitchRef}>
+          {/* Center: Rounded Search Field */}
+          <div className="hidden md:flex flex-1 max-w-xs mx-4">
+            <form onSubmit={handleSearchSubmit} className="w-full relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-2.5" />
+              <input
+                type="text"
+                value={navSearch}
+                onChange={(e) => setNavSearch(e.target.value)}
+                placeholder="Search mentors, topics, exams..."
+                className="w-full text-xs font-medium pl-9 pr-3 py-2 rounded-full bg-white border border-rose-100/80 text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-brand-rose"
+              />
+            </form>
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            {/* Student Stream Switcher in Top Bar */}
+            {isStudent && (
               <button
-                onClick={() => setShowMentorSwitcher(!showMentorSwitcher)}
-                className="flex items-center gap-2 bg-white/90 hover:bg-white px-3 py-1.5 rounded-full border border-rose-200 shadow-sm text-xs font-medium text-brand-maroon transition-all"
-                title="Switch active demo mentor"
+                onClick={() => setStreamModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-rose-200 text-brand-maroon text-xs font-bold shadow-2xs hover:bg-rose-50 transition-colors cursor-pointer"
+                title="Switch Academic Stream"
               >
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden md:inline text-slate-500">Demo Mentor:</span>
-                <span className="font-semibold truncate max-w-[130px]">{currentMentor.name}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-sm">{activeStreamObj.icon}</span>
+                <span className="hidden sm:inline">{activeStreamObj.shortName}</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
               </button>
+            )}
 
-              {showMentorSwitcher && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-card border border-rose-100 p-2 z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-rose-50">
-                    Switch Demo Mentor (5 Verified)
-                  </div>
-                  <div className="py-1 max-h-72 overflow-y-auto">
-                    {mentors.map((m) => (
+            {/* Mentor Track: Switch Demo Mentor Dropdown (Lists all 13 grouped by stream) */}
+            {!isStudent && (
+              <div className="relative" ref={mentorSwitchRef}>
+                <button
+                  onClick={() => setShowMentorSwitcher(!showMentorSwitcher)}
+                  className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-rose-200 shadow-2xs text-xs font-bold text-brand-maroon hover:bg-rose-50 transition-all cursor-pointer"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="hidden sm:inline truncate max-w-[130px]">
+                    {currentMentor.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    ({currentMentor.stream.split(' ')[0]})
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                {showMentorSwitcher && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-elevated border border-rose-100 p-2 z-50 animate-in fade-in max-h-96 overflow-y-auto">
+                    <div className="p-2 border-b border-rose-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Switch Active Senior Mentor (13 Verified)
+                      </p>
+                    </div>
+
+                    {/* Science (PCB) */}
+                    <div className="pt-2 pb-1 px-2 text-[10px] font-bold text-emerald-700 uppercase">
+                      Science (PCB)
+                    </div>
+                    {mentors.filter(m => m.stream === 'Science (PCB)').map(m => (
                       <button
                         key={m.id}
                         onClick={() => {
                           switchDemoMentor(m.id);
                           setShowMentorSwitcher(false);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 transition-colors text-xs ${
-                          m.id === activeMentorId
-                            ? 'bg-brand-roseLight text-brand-maroon font-semibold'
-                            : 'hover:bg-slate-50 text-slate-700'
+                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
-                        <div className="w-7 h-7 rounded-full bg-brand-maroon text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                          {m.initials}
+                        <div>
+                          <p className="font-bold">{m.name}</p>
+                          <p className="text-[10px] text-slate-500">{m.collegeShort}</p>
                         </div>
-                        <div className="truncate">
-                          <p className="font-medium truncate">{m.name}</p>
-                          <p className="text-[10px] text-slate-500">{m.collegeShort} • {m.branch.split(' ')[0]}</p>
-                        </div>
-                        {m.id === activeMentorId && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose ml-auto shrink-0" />
-                        )}
+                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
                       </button>
                     ))}
+
+                    {/* Science (PCM) */}
+                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-blue-700 uppercase border-t border-rose-50 mt-1">
+                      Science (PCM)
+                    </div>
+                    {mentors.filter(m => m.stream === 'Science (PCM)').map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          switchDemoMentor(m.id);
+                          setShowMentorSwitcher(false);
+                        }}
+                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-bold">{m.name}</p>
+                          <p className="text-[10px] text-slate-500">{m.collegeShort}</p>
+                        </div>
+                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
+                      </button>
+                    ))}
+
+                    {/* Arts */}
+                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-purple-700 uppercase border-t border-rose-50 mt-1">
+                      Arts & Humanities
+                    </div>
+                    {mentors.filter(m => m.stream === 'Arts').map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          switchDemoMentor(m.id);
+                          setShowMentorSwitcher(false);
+                        }}
+                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-bold">{m.name}</p>
+                          <p className="text-[10px] text-slate-500">{m.collegeShort} • Demo</p>
+                        </div>
+                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
+                      </button>
+                    ))}
+
+                    {/* Commerce */}
+                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-amber-700 uppercase border-t border-rose-50 mt-1">
+                      Commerce & Management
+                    </div>
+                    {mentors.filter(m => m.stream === 'Commerce').map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          switchDemoMentor(m.id);
+                          setShowMentorSwitcher(false);
+                        }}
+                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-bold">{m.name}</p>
+                          <p className="text-[10px] text-slate-500">{m.collegeShort} • Demo</p>
+                        </div>
+                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Notification Bell with Count Badge */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-full bg-white border border-rose-200/80 text-slate-700 hover:text-brand-rose shadow-2xs hover:bg-rose-50 transition-colors cursor-pointer"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-rose text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-elevated border border-rose-100 p-3 z-50 animate-in fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-rose-100">
+                    <p className="text-xs font-bold text-slate-800">Notifications</p>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllNotificationsRead}
+                        className="text-[10px] text-brand-rose font-bold hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 space-y-1.5 max-h-60 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-4 text-center">No notifications</p>
+                    ) : (
+                      notifications.slice(0, 4).map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => markNotificationRead(n.id)}
+                          className={`p-2.5 rounded-2xl text-xs cursor-pointer transition-colors ${
+                            n.read ? 'bg-slate-50 text-slate-600' : 'bg-brand-blush/60 text-slate-800 font-medium'
+                          }`}
+                        >
+                          <p className="font-bold text-[11px] text-brand-maroon">{n.title}</p>
+                          <p className="text-[10px] text-slate-600 mt-0.5 line-clamp-2">{n.description}</p>
+                          <span className="text-[9px] text-slate-400 block mt-1">{n.time}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          )}
 
-          {/* Quick role toggle shortcut pill */}
-          <div className="hidden md:flex items-center bg-white/70 border border-rose-200/80 p-0.5 rounded-full text-xs font-medium">
-            <button
-              onClick={() => {
-                if (role !== 'student') {
-                  loginAsStudent();
-                  navigate('/student/dashboard');
-                }
-              }}
-              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
-                role === 'student'
-                  ? 'bg-brand-rose text-white shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-brand-rose'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              Student
-            </button>
-            <button
-              onClick={() => {
-                if (role !== 'mentor') {
-                  loginAsMentor(activeMentorId);
-                  navigate('/mentor/dashboard');
-                }
-              }}
-              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
-                role === 'mentor'
-                  ? 'bg-brand-maroon text-white shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-brand-maroon'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Mentor
-            </button>
-          </div>
-
-          {/* Notifications Bell */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded-2xl bg-white/90 hover:bg-white text-slate-700 hover:text-brand-rose border border-rose-100 shadow-sm transition-all"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-brand-maroon" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-rose text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-                  {unreadCount}
+            {/* Profile Button Menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-white border border-rose-200/80 shadow-2xs hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-rose to-brand-maroon text-white text-[10px] font-bold flex items-center justify-center">
+                  {isStudent ? studentUser.initials : currentMentor.initials}
+                </div>
+                <span className="hidden sm:inline text-xs font-bold text-slate-800 truncate max-w-[80px]">
+                  {isStudent ? studentUser.name.split(' ')[0] : currentMentor.name.split(' ')[0]}
                 </span>
-              )}
-            </button>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
 
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-card border border-rose-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between pb-3 border-b border-rose-50">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-800 text-sm">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <span className="text-[10px] font-semibold bg-rose-100 text-brand-rose px-2 py-0.5 rounded-full">
-                        {unreadCount} new
-                      </span>
-                    )}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-3xl shadow-elevated border border-rose-100 p-2 z-50 animate-in fade-in">
+                  <div className="p-2 border-b border-rose-100">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {isStudent ? studentUser.name : currentMentor.name}
+                    </p>
+                    <p className="text-[10px] text-brand-rose font-medium truncate">
+                      {isStudent ? studentUser.email : currentMentor.email}
+                    </p>
                   </div>
-                  {unreadCount > 0 && (
+
+                  <div className="py-1">
                     <button
-                      onClick={markAllNotificationsRead}
-                      className="text-xs text-brand-rose hover:underline font-medium"
+                      onClick={() => {
+                        navigate(isStudent ? '/student/profile' : '/mentor/profile');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-rose-50 hover:text-brand-maroon rounded-2xl flex items-center gap-2 cursor-pointer"
                     >
-                      Mark all as read
+                      <User className="w-3.5 h-3.5" />
+                      <span>{isStudent ? 'Profile & Settings' : 'Edit Profile'}</span>
                     </button>
-                  )}
-                </div>
 
-                <div className="py-2 divide-y divide-rose-50 max-h-80 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-500">
-                      No notifications right now.
-                    </div>
-                  ) : (
-                    notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        onClick={() => {
-                          markNotificationRead(notif.id);
-                          if (notif.link) {
-                            navigate(notif.link);
-                            setShowNotifications(false);
-                          }
-                        }}
-                        className={`py-2.5 px-2 rounded-xl transition-colors cursor-pointer ${
-                          !notif.read ? 'bg-brand-roseLight/60' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-semibold text-slate-800">{notif.title}</p>
-                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                            {notif.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">
-                          {notif.description}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
+                    <button
+                      onClick={() => {
+                        navigate('/');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-rose-50 hover:text-brand-maroon rounded-2xl flex items-center gap-2 cursor-pointer"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Home / Landing</span>
+                    </button>
 
-                <div className="pt-2 border-t border-rose-50 text-center">
-                  <Link
-                    to={isStudent ? '/student/notifications' : '/mentor/notifications'}
-                    onClick={() => setShowNotifications(false)}
-                    className="text-xs font-semibold text-brand-rose hover:text-brand-maroon transition-colors"
-                  >
-                    View all notifications →
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+                    <button
+                      onClick={() => {
+                        resetAllData();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 hover:bg-rose-50 rounded-2xl flex items-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Reset Prototype Data</span>
+                    </button>
 
-          {/* User Profile Menu */}
-          <div className="relative" ref={userMenuRef}>
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white/90 hover:bg-white border border-rose-200 shadow-sm transition-all"
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-xs flex items-center justify-center shadow-inner">
-                {activeUser.initials}
-              </div>
-              <div className="hidden sm:block text-left text-xs">
-                <p className="font-semibold text-slate-800 leading-tight">{activeUser.name}</p>
-                <p className="text-[10px] text-slate-500 font-medium">
-                  {isStudent ? 'Student mentee' : 'Verified Senior'}
-                </p>
-              </div>
-              <ChevronDown className="hidden sm:block w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-card border border-rose-100 p-2 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="px-3 py-3 border-b border-rose-50">
-                  <p className="text-xs font-bold text-slate-900">{activeUser.name}</p>
-                  <p className="text-[11px] text-slate-500 truncate">{activeUser.email}</p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-brand-roseLight text-brand-maroon px-2 py-0.5 rounded-full">
-                      <ShieldCheck className="w-3 h-3 text-brand-rose" />
-                      {isStudent ? 'CSE 1st Year (2025-29)' : 'College Verified Senior'}
-                    </span>
+                    <button
+                      onClick={() => {
+                        logout();
+                        navigate('/');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-2xl flex items-center gap-2 cursor-pointer mt-1"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className="py-1.5 space-y-0.5 text-xs">
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      navigate(isStudent ? '/student/profile' : '/mentor/profile');
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <User className="w-4 h-4 text-slate-400" />
-                    <span>My Profile</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      if (isStudent) {
-                        loginAsMentor(activeMentorId);
-                        navigate('/mentor/dashboard');
-                      } else {
-                        loginAsStudent();
-                        navigate('/student/dashboard');
-                      }
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-brand-rose hover:bg-brand-roseLight transition-colors font-medium"
-                  >
-                    <Sliders className="w-4 h-4" />
-                    <span>Switch to {isStudent ? 'Mentor Track' : 'Student Track'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      resetAllData();
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors"
-                    title="Reset prototype state back to initial mock data"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Reset Prototype Data</span>
-                  </button>
-                </div>
-
-                <div className="pt-1.5 border-t border-rose-50">
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      logout();
-                      navigate('/');
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors text-xs font-semibold"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };

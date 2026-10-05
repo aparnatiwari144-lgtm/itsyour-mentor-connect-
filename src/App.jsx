@@ -22,6 +22,12 @@ import { RoadmapPlanner } from './pages/student/RoadmapPlanner';
 import { StudentProfile } from './pages/student/StudentProfile';
 import { StudentProgress } from './pages/student/StudentProgress';
 import { PlansBilling } from './pages/student/PlansBilling';
+import { MyMentors } from './pages/student/MyMentors';
+import { RecordedSessions } from './pages/student/RecordedSessions';
+import { StudentNotes } from './pages/student/StudentNotes';
+import { StudentQuizzes } from './pages/student/StudentQuizzes';
+import { StudentMarks } from './pages/student/StudentMarks';
+import { StudentStreak } from './pages/student/StudentStreak';
 
 // Mentor Pages
 import { MentorDashboard } from './pages/mentor/MentorDashboard';
@@ -51,16 +57,22 @@ export default function App() {
           <Route path="/student" element={<AppLayout requiredRole="student" />}>
             <Route index element={<Navigate to="/student/dashboard" replace />} />
             <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="my-mentors" element={<MyMentors />} />
             <Route path="mentors" element={<FindMentors />} />
             <Route path="mentors/:id" element={<MentorProfile />} />
             <Route path="book/:id" element={<BookSession />} />
             <Route path="sessions" element={<MySessions />} />
-            <Route path="messages" element={<MessagesPage />} />
+            <Route path="recorded-sessions" element={<RecordedSessions />} />
+            <Route path="notes" element={<StudentNotes />} />
+            <Route path="quizzes" element={<StudentQuizzes />} />
+            <Route path="marks" element={<StudentMarks />} />
+            <Route path="progress" element={<StudentProgress />} />
+            <Route path="streak" element={<StudentStreak />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="planner" element={<RoadmapPlanner />} />
+            <Route path="messages" element={<MessagesPage />} />
             <Route path="billing" element={<PlansBilling />} />
             <Route path="profile" element={<StudentProfile />} />
-            <Route path="progress" element={<StudentProgress />} />
             <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 

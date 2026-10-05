@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { POPULAR_DOMAINS } from '../../data/mentors';
+import { STREAMS_LIST } from '../../data/streamsData';
 import {
   Search,
   Filter,
@@ -12,323 +13,283 @@ import {
   BookOpen,
   Award,
   Check,
-  RotateCcw
+  RotateCcw,
+  SlidersHorizontal
 } from 'lucide-react';
 
 export const FindMentors = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { mentors } = useApp();
+  const { mentors, selectedStream } = useApp();
 
   const initialSearch = searchParams.get('search') || '';
   const initialDomain = searchParams.get('domain') || 'All Domains';
 
+  const [streamFilter, setStreamFilter] = useState(selectedStream || 'All');
   const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const [selectedCollege, setSelectedCollege] = useState('All');
-  const [selectedBranch, setSelectedBranch] = useState('All');
   const [selectedDomain, setSelectedDomain] = useState(initialDomain);
   const [availabilityFilter, setAvailabilityFilter] = useState('All');
 
-  // Filtered mentors list (no rating filtering)
+  // Filtered mentors list
   const filteredMentors = useMemo(() => {
     return mentors.filter((m) => {
-      // Search query (name, college, branch, expertise)
+      // Stream filter
+      const matchesStream =
+        streamFilter === 'All' ||
+        m.stream === streamFilter ||
+        (m.guidesStreams && m.guidesStreams.includes(streamFilter));
+
+      // Search query (name, college, branch, expertise, domain)
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
         m.name.toLowerCase().includes(q) ||
         m.college.toLowerCase().includes(q) ||
         m.branch.toLowerCase().includes(q) ||
-        m.expertise.some((e) => e.toLowerCase().includes(q)) ||
-        m.domains.some((d) => d.toLowerCase().includes(q));
-
-      // College filter
-      const matchesCollege =
-        selectedCollege === 'All' ||
-        m.college.toLowerCase().includes(selectedCollege.toLowerCase()) ||
-        m.collegeShort.toLowerCase().includes(selectedCollege.toLowerCase());
-
-      // Branch filter
-      const matchesBranch =
-        selectedBranch === 'All' ||
-        m.branch.toLowerCase().includes(selectedBranch.toLowerCase());
+        m.expertise?.some((e) => e.toLowerCase().includes(q)) ||
+        m.domains?.some((d) => d.toLowerCase().includes(q));
 
       // Domain filter
       const matchesDomain =
         selectedDomain === 'All Domains' ||
-        m.domains.includes(selectedDomain) ||
-        m.expertise.some((e) => e.toLowerCase().includes(selectedDomain.toLowerCase()));
+        m.domains?.includes(selectedDomain) ||
+        m.expertise?.some((e) => e.toLowerCase().includes(selectedDomain.toLowerCase()));
 
       // Availability filter
       const matchesAvailability =
         availabilityFilter === 'All' ||
-        (availabilityFilter === 'Today' && m.availableSlots.some((s) => s.day === 'Today')) ||
-        (availabilityFilter === 'Tomorrow' && m.availableSlots.some((s) => s.day === 'Tomorrow'));
+        (availabilityFilter === 'Today' && m.availableSlots?.some((s) => s.day === 'Today')) ||
+        (availabilityFilter === 'Tomorrow' && m.availableSlots?.some((s) => s.day === 'Tomorrow'));
 
-      return (
-        matchesSearch &&
-        matchesCollege &&
-        matchesBranch &&
-        matchesDomain &&
-        matchesAvailability
-      );
+      return matchesStream && matchesSearch && matchesDomain && matchesAvailability;
     });
-  }, [mentors, searchQuery, selectedCollege, selectedBranch, selectedDomain, availabilityFilter]);
+  }, [mentors, streamFilter, searchQuery, selectedDomain, availabilityFilter]);
 
   const resetFilters = () => {
+    setStreamFilter('All');
     setSearchQuery('');
-    setSelectedCollege('All');
-    setSelectedBranch('All');
     setSelectedDomain('All Domains');
     setAvailabilityFilter('All');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 text-left">
       {/* Page Header */}
       <div>
-        <div className="inline-flex items-center gap-2 bg-brand-roseLight px-3 py-1 rounded-full text-xs font-semibold text-brand-maroon mb-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-brand-rose" />
-          <span>Verified via College Domain Emails (@nitk.edu.in, @iiserkol.ac.in)</span>
+        <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-xs font-bold text-brand-maroon shadow-2xs border border-rose-200 mb-2">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>13 Verified Seniors • Arts, Commerce, PCM & PCB</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Find Senior Mentors
         </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
-          Get authentic, pressure-free advice on IIT/NIT/IISER entrance, branch selection, and college transitions from verified seniors.
+        <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+          Connect with top rankers and scholars across IISER, NITK, Delhi University, Christ, and SRCC. Honest advice, zero commercial pressure, and 1 free trial session.
         </p>
       </div>
 
-      {/* Filter and Search Bar Card */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft space-y-4">
-        {/* Top search input */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+      {/* Stream Filter Chip Row (All / Arts / Commerce / Science PCM / Science PCB) */}
+      <div className="clay-card p-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+          Filter by Academic Track:
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setStreamFilter('All')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              streamFilter === 'All'
+                ? 'clay-btn-primary'
+                : 'bg-white text-slate-700 hover:bg-rose-50 border border-slate-200'
+            }`}
+          >
+            All Tracks ({mentors.length})
+          </button>
+
+          {STREAMS_LIST.map((st) => {
+            const count = mentors.filter(m => m.stream === st.id || m.guidesStreams?.includes(st.id)).length;
+            const isSelected = streamFilter === st.id;
+
+            return (
+              <button
+                key={st.id}
+                onClick={() => setStreamFilter(st.id)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'clay-btn-primary'
+                    : 'bg-white text-slate-700 hover:bg-rose-50 border border-slate-200'
+                }`}
+              >
+                <span>{st.icon}</span>
+                <span>{st.name}</span>
+                <span className="text-[10px] opacity-75 font-normal">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Search & Domain Filter Bar */}
+      <div className="clay-card p-4 flex flex-col md:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search by mentor name, institute, branch, or specific topic..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-rose-200 focus:outline-hidden focus:ring-2 focus:ring-brand-rose/20 focus:border-brand-rose text-xs sm:text-sm bg-white"
+            placeholder="Search by mentor name, college, branch, or topics..."
+            className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-rose-100 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
           />
         </div>
 
-        {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Institution
-            </label>
-            <select
-              value={selectedCollege}
-              onChange={(e) => setSelectedCollege(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-rose-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-hidden"
-            >
-              <option value="All">All Institutes</option>
-              <option value="IISER">IISER Kolkata</option>
-              <option value="NITK">NITK Surathkal</option>
-            </select>
-          </div>
+        {/* Domain dropdown */}
+        <select
+          value={selectedDomain}
+          onChange={(e) => setSelectedDomain(e.target.value)}
+          className="text-xs font-semibold px-3 py-2.5 rounded-2xl bg-white border border-rose-100 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+        >
+          {POPULAR_DOMAINS.map((dom) => (
+            <option key={dom} value={dom}>{dom}</option>
+          ))}
+        </select>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Branch / Program
-            </label>
-            <select
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-rose-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-hidden"
-            >
-              <option value="All">All Branches</option>
-              <option value="Electronics">ECE</option>
-              <option value="Civil">Civil Engineering</option>
-              <option value="Natural Sciences">Pure Sciences / Research</option>
-            </select>
-          </div>
+        {/* Availability filter */}
+        <select
+          value={availabilityFilter}
+          onChange={(e) => setAvailabilityFilter(e.target.value)}
+          className="text-xs font-semibold px-3 py-2.5 rounded-2xl bg-white border border-rose-100 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+        >
+          <option value="All">Any Availability</option>
+          <option value="Today">Slots Available Today</option>
+          <option value="Tomorrow">Slots Available Tomorrow</option>
+        </select>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Availability
-            </label>
-            <select
-              value={availabilityFilter}
-              onChange={(e) => setAvailabilityFilter(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-rose-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-hidden"
-            >
-              <option value="All">All Days</option>
-              <option value="Today">Available Today</option>
-              <option value="Tomorrow">Available Tomorrow</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Domain Tags Scroll */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Filter by Domain:
-            </span>
-            {(searchQuery || selectedCollege !== 'All' || selectedBranch !== 'All' || selectedDomain !== 'All Domains' || availabilityFilter !== 'All') && (
-              <button
-                onClick={resetFilters}
-                className="text-xs text-brand-rose hover:underline font-medium flex items-center gap-1"
-              >
-                <RotateCcw className="w-3 h-3" /> Reset all filters
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {POPULAR_DOMAINS.map((domain) => (
-              <button
-                key={domain}
-                onClick={() => setSelectedDomain(domain)}
-                className={`text-xs px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
-                  selectedDomain === domain
-                    ? 'bg-brand-rose text-white shadow-xs'
-                    : 'bg-brand-blush/60 hover:bg-brand-roseLight text-slate-700 border border-rose-100'
-                }`}
-              >
-                {domain}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="flex items-center justify-between text-xs text-slate-600 px-1">
-        <span>
-          Showing <strong className="text-slate-900">{filteredMentors.length}</strong> verified senior mentor{filteredMentors.length === 1 ? '' : 's'}
-        </span>
-        <span className="text-[11px] font-semibold text-brand-rose">
-          Free trial eligible • Sample pricing thereafter
-        </span>
+        {(searchQuery || selectedDomain !== 'All Domains' || streamFilter !== 'All' || availabilityFilter !== 'All') && (
+          <button
+            onClick={resetFilters}
+            className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-brand-rose flex items-center gap-1 cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        )}
       </div>
 
       {/* Mentors Grid */}
-      {filteredMentors.length === 0 ? (
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 text-center border border-white/80 shadow-soft">
-          <div className="w-12 h-12 rounded-2xl bg-rose-100 text-brand-rose flex items-center justify-center mx-auto mb-3">
-            <Search className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMentors.length === 0 ? (
+          <div className="col-span-full py-12 text-center bg-white/70 rounded-3xl border border-dashed border-rose-200">
+            <p className="text-base font-bold text-slate-800">No mentors match your search filters</p>
+            <p className="text-xs text-slate-500 mt-1">Try resetting your filters or switching to "All Tracks".</p>
+            <button
+              onClick={resetFilters}
+              className="clay-btn-primary px-5 py-2 text-xs font-bold mt-4 cursor-pointer"
+            >
+              Reset All Filters
+            </button>
           </div>
-          <h3 className="font-bold text-slate-900 text-base">No mentors matched your filters</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-            Try adjusting your search query, or reset filters to see all 5 verified mentors from IISER Kolkata and NITK Surathkal.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="mt-4 px-4 py-2 rounded-full bg-brand-rose text-white text-xs font-semibold shadow-xs"
-          >
-            Reset Filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredMentors.map((mentor) => (
+        ) : (
+          filteredMentors.map((mentor) => (
             <div
               key={mentor.id}
-              className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft hover:shadow-card transition-all flex flex-col justify-between"
+              className="clay-card p-6 flex flex-col justify-between hover:scale-[1.01] transition-all"
             >
               <div>
-                {/* Header: Avatar, Name, Verified Badge */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                {/* Header with Avatar, Verified badge & Stream */}
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-lg flex items-center justify-center shadow-soft shrink-0">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${mentor.avatarBg || 'from-rose-500 to-maroon'} text-white font-black text-base flex items-center justify-center shadow-soft shrink-0`}>
                       {mentor.initials}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-900 text-base">{mentor.name}</h3>
-                      </div>
-                      <p className="text-xs text-slate-600 font-medium">
-                        {mentor.college}
+                      <h3 className="font-black text-base text-slate-900 leading-tight">
+                        {mentor.name}
+                      </h3>
+                      <p className="text-xs font-bold text-brand-rose mt-0.5">
+                        {mentor.collegeShort}
                       </p>
-                      <p className="text-[11px] text-brand-rose font-semibold">
-                        {mentor.branch} • {mentor.year}
+                      <p className="text-[10px] text-slate-500">
+                        {mentor.degree || mentor.branch}
                       </p>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    Verified
+                  <span
+                    className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0"
+                    title={mentor.verificationMethod}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
                   </span>
                 </div>
 
-                {/* Verification Email Callout */}
-                <div className="bg-brand-roseLight/50 rounded-xl px-3 py-1.5 mb-3 flex items-center justify-between text-[11px] text-slate-600">
-                  <span className="font-mono text-brand-maroon font-semibold">{mentor.email}</span>
-                  <span className="text-[10px] text-emerald-700 font-semibold">Domain Verified</span>
+                {/* Badges Row */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className="text-[10px] font-bold bg-[#FFF1F3] text-brand-maroon border border-rose-200 px-2 py-0.5 rounded-full">
+                    {mentor.stream}
+                  </span>
+
+                  {mentor.isDemoProfile && (
+                    <span className="text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
+                      Demo profile
+                    </span>
+                  )}
+
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {mentor.sessionsCompleted} sessions guided
+                  </span>
                 </div>
 
                 {/* Short Bio */}
-                <p className="text-xs text-slate-600 leading-relaxed mb-4 line-clamp-3">
+                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-3">
                   {mentor.bio}
                 </p>
 
-                {/* Expertise Chips */}
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                    Areas of Guidance
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {mentor.expertise.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] bg-brand-blush text-brand-maroon font-semibold px-2 py-0.5 rounded-md"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                {/* Expertise Tags */}
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {mentor.expertise?.slice(0, 4).map((exp, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[9.5px] font-medium bg-rose-50 text-brand-maroon px-2 py-0.5 rounded-md"
+                    >
+                      {exp}
+                    </span>
+                  ))}
                 </div>
 
                 {/* Available Slots Preview */}
-                <div className="bg-slate-50/80 rounded-2xl p-3 mb-4">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1.5">
-                    <span className="flex items-center gap-1 text-brand-maroon">
-                      <Calendar className="w-3.5 h-3.5" /> Next Available Slots:
+                {mentor.availableSlots && mentor.availableSlots.length > 0 && (
+                  <div className="p-2.5 rounded-2xl bg-white/90 border border-rose-100 text-[10px] text-slate-600 mb-4 flex items-center justify-between">
+                    <span className="font-semibold text-brand-maroon flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-brand-rose" />
+                      <span>Next Slot: {mentor.availableSlots[0].day}</span>
                     </span>
-                    <span className="text-brand-rose font-bold text-[10px]">Free Trial Eligible</span>
+                    <span className="font-mono text-slate-500">
+                      {mentor.availableSlots[0].time}
+                    </span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {mentor.availableSlots.slice(0, 3).map((slot) => (
-                      <span
-                        key={slot.id}
-                        className="text-[10px] bg-white border border-rose-100 text-slate-600 px-2 py-0.5 rounded-md"
-                      >
-                        {slot.day}, {slot.time.split(' - ')[0]}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Bottom Actions (No star rating numbers) */}
-              <div className="pt-4 border-t border-rose-50 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600">
-                  {mentor.sessionsCompleted}+ sessions conducted
-                </span>
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-rose-100 flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/student/mentors/${mentor.id}`)}
+                  className="clay-btn-secondary px-3 py-2 text-xs font-bold flex-1 text-center cursor-pointer"
+                >
+                  View Profile
+                </button>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigate(`/student/mentors/${mentor.id}`)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-brand-rose hover:bg-slate-100 transition-colors"
-                  >
-                    View Profile
-                  </button>
-                  <button
-                    onClick={() => navigate(`/student/book/${mentor.id}`)}
-                    className="px-4 py-2 rounded-full bg-gradient-to-r from-brand-rose to-brand-maroon hover:from-brand-roseHover hover:to-brand-maroonHover text-white text-xs font-bold shadow-soft hover:shadow-card transition-all"
-                  >
-                    Book Session
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigate(`/student/book/${mentor.id}`)}
+                  className="clay-btn-primary px-3 py-2 text-xs font-bold flex-1 flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>Book Call</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };

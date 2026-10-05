@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { MENTOR_ANALYTICS } from '../../data/mockData';
 import {
   Calendar,
   Clock,
@@ -16,13 +15,16 @@ import {
   Sparkles,
   Inbox,
   CreditCard,
-  DollarSign
+  ChevronDown
 } from 'lucide-react';
 
 export const MentorDashboard = () => {
   const navigate = useNavigate();
   const {
     currentMentor,
+    mentors,
+    activeMentorId,
+    switchDemoMentor,
     sessions,
     acceptRequest,
     declineRequest
@@ -34,226 +36,217 @@ export const MentorDashboard = () => {
   const upcomingSessions = mentorSessions.filter((s) => s.status === 'upcoming');
   const todaySessions = upcomingSessions.filter((s) => s.date.includes('Today'));
 
-  const totalSessionsDone = currentMentor.sessionsCompleted;
-  const hoursMentored = (totalSessionsDone * 0.75).toFixed(1); // 45m each
+  const totalSessionsDone = currentMentor.sessionsCompleted || 42;
+  const hoursMentored = (totalSessionsDone * 0.75).toFixed(1);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Mentor Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-brand-maroon via-brand-rose to-brand-dark rounded-3xl p-6 sm:p-8 text-white shadow-card">
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-emerald-500/30">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Authenticated Senior • {currentMentor.verificationMethod}</span>
-          </div>
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 text-left">
+      {/* Mentor Welcome Banner with Clay Styling */}
+      <div className="clay-card p-6 sm:p-8 bg-gradient-to-r from-white via-[#FFF8F9] to-[#FDE8EA] relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Verified Senior • {currentMentor.collegeShort}</span>
+              </span>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Hi, {currentMentor.name}! 🎓
-          </h1>
-          <p className="mt-2 text-rose-100 text-xs sm:text-sm leading-relaxed">
-            {currentMentor.degree} • {currentMentor.branch}
-          </p>
-          <p className="mt-1 text-slate-300 text-xs">
-            {currentMentor.college} ({currentMentor.year}) • {currentMentor.email}
-          </p>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFF1F3] text-brand-maroon text-xs font-bold border border-rose-200">
+                Track: {currentMentor.stream}
+              </span>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => navigate('/mentor/availability')}
-              className="px-5 py-2.5 rounded-full bg-white text-brand-maroon hover:bg-rose-50 font-bold text-xs shadow-md transition-all flex items-center gap-2"
-            >
-              <Clock className="w-3.5 h-3.5" />
-              Manage Availability Slots
-            </button>
-            {todaySessions.length > 0 && (
-              <button
-                onClick={() => navigate(`/mentor/call/${todaySessions[0].id}`)}
-                className="px-5 py-2.5 rounded-full bg-rose-700/80 hover:bg-rose-700 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-2"
-              >
-                <Video className="w-3.5 h-3.5 text-emerald-300" />
-                Start Today's Call ({todaySessions[0].time.split(' - ')[0]})
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Decorative blur rings */}
-        <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-64 h-64 bg-brand-rose/20 rounded-full blur-2xl pointer-events-none" />
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Stat 1: Total Sessions */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Total Sessions
-            </span>
-            <Calendar className="w-4 h-4 text-brand-rose" />
-          </div>
-          <p className="text-2xl font-black text-slate-900">{totalSessionsDone}</p>
-          <p className="text-[11px] text-slate-500 mt-1">Conducted since joining</p>
-        </div>
-
-        {/* Stat 2: Upcoming Today */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Upcoming Today
-            </span>
-            <Clock className="w-4 h-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-black text-emerald-600">{todaySessions.length}</p>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {todaySessions.length > 0 ? todaySessions[0].studentName : 'No calls pending today'}
-          </p>
-        </div>
-
-        {/* Stat 3: Hours Mentored (Replaces Average Rating) */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Hours Mentored
-            </span>
-            <Clock className="w-4 h-4 text-brand-rose" />
-          </div>
-          <p className="text-2xl font-black text-brand-maroon">{hoursMentored} hrs</p>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Direct 1:1 student guidance
-          </p>
-        </div>
-
-        {/* Stat 4: Mentor Earnings Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Mentor Earnings
-            </span>
-            <CreditCard className="w-4 h-4 text-emerald-600" />
-          </div>
-          <p className="text-2xl font-black text-emerald-700">{MENTOR_ANALYTICS.earningsOverview.totalEarned}</p>
-          <p className="text-[10px] text-slate-400 mt-1 font-medium">
-            Sample pricing - prototype
-          </p>
-        </div>
-      </div>
-
-      {/* Main Grid: Today's Schedule + Session Requests */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Today's Schedule & Session Requests */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's Schedule */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-rose-50">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h3 className="font-bold text-base text-slate-900">Today's Mentorship Schedule</h3>
-              </div>
-              <button
-                onClick={() => navigate('/mentor/sessions')}
-                className="text-xs text-brand-rose hover:underline font-semibold"
-              >
-                View full calendar →
-              </button>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-xs font-bold border border-purple-200">
+                Guides: {currentMentor.guidesStreams ? currentMentor.guidesStreams.join(', ') : currentMentor.stream}
+              </span>
             </div>
 
-            {todaySessions.length === 0 ? (
-              <p className="text-xs text-slate-500 py-4 text-center">
-                No sessions scheduled for today. Check upcoming calendar or update available slots.
-              </p>
-            ) : (
-              todaySessions.map((sess) => (
-                <div
-                  key={sess.id}
-                  className="bg-brand-blush/40 rounded-2xl p-5 border border-rose-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-11 h-11 rounded-2xl bg-brand-maroon text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
-                      {sess.studentName.split(' ').map((n) => n[0]).join('')}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{sess.studentName}</h4>
-                      <p className="text-xs text-slate-500">{sess.studentCollege}</p>
-                      <p className="text-xs font-semibold text-brand-rose mt-1">
-                        Topic: {sess.topic}
-                      </p>
-                      <p className="text-[11px] text-slate-600 italic mt-0.5 line-clamp-2">
-                        "{sess.doubtNotes}"
-                      </p>
-                    </div>
-                  </div>
+            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Hi, {currentMentor.name}! 🎓
+            </h1>
+            <p className="mt-1 text-sm font-semibold text-brand-maroon">
+              {currentMentor.degree || currentMentor.branch}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500 font-mono">
+              {currentMentor.college} ({currentMentor.year}) • {currentMentor.email}
+            </p>
 
-                  <div className="flex flex-col sm:items-end gap-2 shrink-0">
-                    <span className="text-xs font-bold text-brand-maroon bg-white px-3 py-1 rounded-full border border-rose-200">
-                      {sess.time}
-                    </span>
-                    <button
-                      onClick={() => navigate(`/mentor/call/${sess.id}`)}
-                      className="px-4 py-2 rounded-full bg-gradient-to-r from-brand-rose to-brand-maroon hover:from-brand-roseHover hover:to-brand-maroonHover text-white text-xs font-bold shadow-soft flex items-center gap-1.5 transition-all"
-                    >
-                      <Video className="w-3.5 h-3.5" /> Start Video Call
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate('/mentor/availability')}
+                className="clay-btn-primary px-5 py-2.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
+              >
+                <Clock className="w-4 h-4" />
+                <span>Manage Availability Slots</span>
+              </button>
+
+              {todaySessions.length > 0 && (
+                <button
+                  onClick={() => navigate(`/mentor/call/${todaySessions[0].id}`)}
+                  className="clay-btn-secondary px-5 py-2.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
+                >
+                  <Video className="w-4 h-4 text-emerald-600" />
+                  <span>Start Today's Call ({todaySessions[0].time.split(' - ')[0]})</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Pending Session Requests (Accept / Decline) */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-rose-50">
+          {/* Quick Mentor Switcher on Dashboard */}
+          <div className="bg-white/90 p-4 rounded-3xl border border-rose-100 shadow-soft w-full md:w-72 shrink-0">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Active Senior Demo Persona:
+            </p>
+            <select
+              value={activeMentorId}
+              onChange={(e) => switchDemoMentor(e.target.value)}
+              className="w-full text-xs font-semibold px-3 py-2 rounded-2xl bg-[#FFF6F7] border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose"
+            >
+              <optgroup label="Science (PCB)">
+                {mentors.filter(m => m.stream === 'Science (PCB)').map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.collegeShort})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Science (PCM)">
+                {mentors.filter(m => m.stream === 'Science (PCM)').map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.collegeShort})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Arts & Humanities">
+                {mentors.filter(m => m.stream === 'Arts').map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.collegeShort})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Commerce & Management">
+                {mentors.filter(m => m.stream === 'Commerce').map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.collegeShort})
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <p className="text-[10px] text-slate-500 mt-2">
+              13 Verified seniors available across all 4 streams.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4 Pastel Stat Tiles in Different Tints */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Tile 1: Total Sessions [Pink Tint] */}
+        <div className="clay-tile-pink p-5 text-left">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-brand-maroon">Total Sessions</span>
+            <div className="w-8 h-8 rounded-xl bg-white text-brand-rose flex items-center justify-center shadow-xs">
+              <Calendar className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">{totalSessionsDone}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Conducted since onboarding</p>
+        </div>
+
+        {/* Tile 2: Hours Mentored [Butter-Yellow Tint] */}
+        <div className="clay-tile-yellow p-5 text-left">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-amber-900">Hours Mentored</span>
+            <div className="w-8 h-8 rounded-xl bg-white text-amber-600 flex items-center justify-center shadow-xs">
+              <Clock className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">{hoursMentored} hrs</p>
+          <p className="text-[10px] text-slate-500 mt-1">Direct 1:1 guidance</p>
+        </div>
+
+        {/* Tile 3: Students Helped [Baby-Blue Tint] */}
+        <div className="clay-tile-blue p-5 text-left">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-blue-900">Students Helped</span>
+            <div className="w-8 h-8 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-xs">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">{Math.round(totalSessionsDone * 0.85)}</p>
+          <p className="text-[10px] text-slate-500 mt-1">Across school & colleges</p>
+        </div>
+
+        {/* Tile 4: Honorarium / Earnings [Lavender Tint] */}
+        <div className="clay-tile-lavender p-5 text-left">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-purple-900">Honorarium (Mock)</span>
+            <div className="w-8 h-8 rounded-xl bg-white text-purple-600 flex items-center justify-center shadow-xs">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-purple-950">₹18,400</p>
+          <p className="text-[10px] text-purple-800/80 mt-1">Sample honorarium stats</p>
+        </div>
+      </div>
+
+      {/* Main Workspace Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+        {/* Pending Requests & Today Schedule */}
+        <div className="clay-card p-6 lg:col-span-2 space-y-6">
+          {/* Pending Session Requests */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Inbox className="w-4 h-4 text-brand-rose" />
-                <h3 className="font-bold text-base text-slate-900">
-                  New Session Requests ({pendingRequests.length})
+                <Inbox className="w-5 h-5 text-brand-rose" />
+                <h3 className="text-base font-black text-slate-900">
+                  Pending Session Requests
                 </h3>
               </div>
-              <button
-                onClick={() => navigate('/mentor/requests')}
-                className="text-xs text-brand-rose hover:underline font-semibold"
-              >
-                Manage all
-              </button>
+              <span className="text-xs font-bold text-brand-rose bg-rose-50 px-2.5 py-0.5 rounded-full">
+                {pendingRequests.length} Pending
+              </span>
             </div>
 
             {pendingRequests.length === 0 ? (
-              <p className="text-xs text-slate-500 py-4 text-center">
-                No pending requests. All mentorship inquiries are up to date!
-              </p>
+              <div className="p-6 rounded-2xl bg-white/70 border border-dashed border-rose-200 text-center">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-1.5" />
+                <p className="text-xs font-bold text-slate-700">All caught up!</p>
+                <p className="text-[11px] text-slate-500">No pending session requests at the moment.</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {pendingRequests.map((req) => (
                   <div
                     key={req.id}
-                    className="p-4 rounded-2xl border border-rose-100 bg-white/90 shadow-2xs hover:shadow-xs transition-all space-y-3"
+                    className="p-4 rounded-2xl bg-white border border-rose-100 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <span className="font-bold text-xs text-slate-900">{req.studentName}</span>
-                        <span className="text-[11px] text-slate-500 ml-2">({req.studentCollege})</span>
-                      </div>
-                      <span className="text-[11px] font-bold text-brand-maroon bg-brand-blush/60 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
-                        {req.date} • {req.time}
-                      </span>
-                    </div>
-
                     <div>
-                      <p className="text-xs font-semibold text-slate-800">Topic: {req.topic}</p>
-                      <p className="text-xs text-slate-600 mt-0.5 italic">"{req.doubtNotes}"</p>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-slate-900">{req.studentName}</span>
+                        <span className="text-[10px] text-slate-500">({req.studentCollege})</span>
+                        {req.isFreeTrial && (
+                          <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded-full">
+                            Free Trial
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-bold text-brand-maroon mt-1">Topic: {req.topic}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-mono">
+                        {req.date} at {req.time}
+                      </p>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-rose-50">
-                      <button
-                        onClick={() => declineRequest(req.id)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                      >
-                        Decline
-                      </button>
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => acceptRequest(req.id)}
-                        className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1"
+                        className="clay-btn-primary px-3.5 py-1.5 text-xs font-bold cursor-pointer"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Accept Request
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => declineRequest(req.id)}
+                        className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-red-600 rounded-full border border-slate-200 cursor-pointer"
+                      >
+                        Decline
                       </button>
                     </div>
                   </div>
@@ -261,44 +254,79 @@ export const MentorDashboard = () => {
               </div>
             )}
           </div>
+
+          {/* Today's Schedule */}
+          <div className="pt-4 border-t border-rose-100">
+            <h3 className="text-base font-black text-slate-900 mb-3">
+              Today's Mentorship Schedule
+            </h3>
+
+            {todaySessions.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">No calls scheduled for today yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {todaySessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="p-3.5 rounded-2xl bg-[#FFF6F7] border border-rose-100 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-900">{session.topic}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        With {session.studentName} • {session.time}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/mentor/call/${session.id}`)}
+                      className="clay-btn-primary px-4 py-1.5 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Start Call</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Col: Recent Written Feedback */}
-        <div className="space-y-6">
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-rose-50">
-              <h3 className="font-bold text-sm text-slate-900">Recent Mentee Feedback</h3>
+        {/* Recent Written Feedback (NO Stars) */}
+        <div className="clay-card p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-black text-slate-900">
+                Recent Written Feedback
+              </h3>
               <button
-                onClick={() => navigate('/mentor/reviews')}
-                className="text-xs text-brand-rose hover:underline font-semibold"
+                onClick={() => navigate('/mentor/feedback')}
+                className="text-xs font-bold text-brand-rose hover:underline cursor-pointer"
               >
-                View all
+                View all →
               </button>
             </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Real notes from mentees you have guided.
+            </p>
 
             <div className="space-y-3">
-              {currentMentor.reviews.slice(0, 3).map((rev) => (
-                <div key={rev.id} className="p-3.5 rounded-2xl bg-brand-blush/20 border border-rose-100/70 text-xs">
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="font-bold text-slate-800">{rev.studentName}</span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 font-semibold">
-                      Verified
-                    </span>
+              {currentMentor.reviews?.slice(0, 3).map((rev) => (
+                <div key={rev.id} className="p-3.5 rounded-2xl bg-[#FFF6F7] border border-rose-100 text-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-slate-900">{rev.studentName}</span>
+                    <span className="text-[10px] text-slate-400">{rev.date}</span>
                   </div>
-                  <p className="text-slate-600 italic line-clamp-3">"{rev.comment}"</p>
-                  <span className="text-[10px] text-slate-400 mt-1 block">{rev.date}</span>
+                  <p className="text-slate-600 line-clamp-3 leading-relaxed">
+                    "{rev.comment}"
+                  </p>
                 </div>
               ))}
             </div>
+          </div>
 
-            <div className="pt-2">
-              <button
-                onClick={() => navigate('/mentor/reviews')}
-                className="w-full py-2 bg-brand-roseLight hover:bg-rose-100 text-brand-maroon text-xs font-bold rounded-xl transition-colors text-center"
-              >
-                See Full Feedback →
-              </button>
-            </div>
+          <div className="mt-5 pt-3 border-t border-rose-100 text-center">
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              ✓ Verified via {currentMentor.email.split('@')[1]}
+            </span>
           </div>
         </div>
       </div>

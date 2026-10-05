@@ -1,12 +1,11 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { STUDENT_PROGRESS_STATS } from '../../data/mockData';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -19,165 +18,253 @@ import {
   Sparkles,
   ShieldCheck,
   CheckCircle2,
-  FileText
+  FileText,
+  Clock,
+  Flame
 } from 'lucide-react';
 
 export const StudentProgress = () => {
-  const { studentUser, sessions } = useApp();
+  const { studentUser, sessions, quizResults, selectedStream } = useApp();
 
-  const sessionsWithFeedback = sessions.filter((s) => s.review);
+  // Session hours data (past 6 weeks)
+  const sessionHoursData = [
+    { period: 'Week 1', hours: 1.5 },
+    { period: 'Week 2', hours: 3.0 },
+    { period: 'Week 3', hours: 2.25 },
+    { period: 'Week 4', hours: 4.5 },
+    { period: 'Week 5', hours: 3.75 },
+    { period: 'This Week', hours: 5.0 }
+  ];
+
+  // Quiz score trend (past 5 attempts)
+  const quizTrendData = quizResults.length > 0
+    ? quizResults.map((q, idx) => ({ name: `Quiz ${idx + 1}`, score: q.percentage, title: q.title }))
+    : [
+        { name: 'Drill 1', score: 65 },
+        { name: 'Drill 2', score: 75 },
+        { name: 'Drill 3', score: 85 },
+        { name: 'Drill 4', score: 100 }
+      ];
+
+  // Weekly Goals
+  const weeklyGoals = [
+    { id: 1, title: 'Complete 2 high-yield 1:1 senior calls', current: 2, total: 2, completed: true },
+    { id: 2, title: 'Solve 15 stream practice drill questions', current: 12, total: 15, completed: false },
+    { id: 3, title: 'Revise formula cheat sheets & take notes', current: 4, total: 5, completed: false }
+  ];
+
+  const overallGoalProgress = Math.round(
+    (weeklyGoals.reduce((acc, g) => acc + g.current, 0) /
+      weeklyGoals.reduce((acc, g) => acc + g.total, 0)) *
+      100
+  );
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto animate-in fade-in duration-300 text-left">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Feedback & Growth Analytics
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-brand-maroon text-xs font-bold mb-2">
+          <TrendingUp className="w-3.5 h-3.5 text-brand-rose" />
+          <span>Academic Analytics • {selectedStream}</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          Progress & Learning Trajectory
         </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          Tracking your clarity progression, self-assessment confidence, and qualitative session notes.
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Monitor your cumulative session hours, quiz accuracy curves, and weekly milestone completion.
         </p>
       </div>
 
       {/* Hero Stat Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Self-Assessment Score
+        <div className="clay-tile-pink p-5 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-maroon">
+            Total Senior Hours
           </span>
-          <p className="text-3xl font-black text-brand-rose mt-1">92%</p>
-          <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5" /> +67% vs before mentorship
+          <p className="text-3xl font-black text-brand-maroon mt-1">19.5 hrs</p>
+          <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+            <TrendingUp className="w-3.5 h-3.5" /> +2.5 hrs this week
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Feedback Submitted
+        <div className="clay-tile-yellow p-5 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900">
+            Average Quiz Accuracy
           </span>
-          <p className="text-3xl font-black text-slate-900 mt-1">{sessionsWithFeedback.length}</p>
-          <p className="text-xs text-slate-500 mt-1">
-            Qualitative session notes
+          <p className="text-3xl font-black text-amber-900 mt-1">
+            {quizResults.length > 0 ? Math.round(quizResults.reduce((a, b) => a + b.percentage, 0) / quizResults.length) : 85}%
+          </p>
+          <p className="text-xs text-amber-800 font-medium mt-1">
+            Across {quizResults.length || 4} practice drills
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Milestones Completed
+        <div className="clay-tile-blue p-5 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+            Weekly Goals Target
           </span>
-          <p className="text-3xl font-black text-brand-maroon mt-1">
-            {studentUser.goals?.length || 3} Goals
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Tracked in active study roadmap
+          <p className="text-3xl font-black text-blue-900 mt-1">{overallGoalProgress}%</p>
+          <p className="text-xs text-blue-800 font-medium mt-1">
+            On track for completion
           </p>
         </div>
       </div>
 
-      {/* Recharts Analytics Charts */}
+      {/* Charts Grid: Session Hours Bar Chart & Quiz Score Trend Line Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Clarity Growth Chart (Overcoming parental pressure & self-doubt) */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
+        {/* Session Hours Bar Chart */}
+        <div className="clay-card p-6 space-y-4">
           <div>
-            <h3 className="font-bold text-base text-slate-900">
-              Clarity & Self-Assessment Growth
+            <h3 className="font-black text-base text-slate-900">
+              Session Hours with Seniors
             </h3>
             <p className="text-xs text-slate-500">
-              Measuring reduction in parental comparison & confidence in chosen career path.
+              Weekly hours dedicated to 1:1 doubt solving & curriculum guidance
             </p>
           </div>
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={STUDENT_PROGRESS_STATS.clarityGrowth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#B3263E" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#B3263E" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
+              <BarChart data={sessionHoursData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F5D7DA" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6B7280' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} domain={[0, 100]} />
+                <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} unit="h" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #F5D7DA', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    border: '1px solid #F5D7DA',
+                    boxShadow: '0 8px 20px rgba(122,21,48,0.1)'
+                  }}
+                  formatter={(val) => [`${val} Hours`, 'Time Mentored']}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#B3263E"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#roseGradient)"
-                  name="Clarity Score (%)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Monthly Mentorship Sessions Chart */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
-          <div>
-            <h3 className="font-bold text-base text-slate-900">
-              Monthly Mentorship Sessions
-            </h3>
-            <p className="text-xs text-slate-500">
-              1:1 calls completed vs target per semester.
-            </p>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={STUDENT_PROGRESS_STATS.sessionsMonthly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F5D7DA" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6B7280' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #F5D7DA', fontSize: '12px' }}
-                />
-                <Bar dataKey="attended" fill="#7A1530" radius={[6, 6, 0, 0]} name="Sessions Attended" />
-                <Bar dataKey="target" fill="#F5D7DA" radius={[6, 6, 0, 0]} name="Target Cadence" />
+                <Bar dataKey="hours" fill="#B3263E" radius={[8, 8, 4, 4]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Quiz Score Trend Line Chart */}
+        <div className="clay-card p-6 space-y-4">
+          <div>
+            <h3 className="font-black text-base text-slate-900">
+              Quiz Score Trajectory
+            </h3>
+            <p className="text-xs text-slate-500">
+              Concept retention trend across daily stream drills
+            </p>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={quizTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F5D7DA" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6B7280' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} unit="%" domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    border: '1px solid #F5D7DA',
+                    boxShadow: '0 8px 20px rgba(122,21,48,0.1)'
+                  }}
+                  formatter={(val) => [`${val}%`, 'Score']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#7A1530"
+                  strokeWidth={3}
+                  dot={{ fill: '#B3263E', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      {/* Written Feedback Given (No star numbers) */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
-        <h3 className="font-bold text-base text-slate-900">
-          Written Feedback Given to Mentors
-        </h3>
-
-        {sessionsWithFeedback.length === 0 ? (
-          <p className="text-xs text-slate-500 py-4">
-            No feedback submitted yet. Complete an upcoming session to submit guidance notes!
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {sessionsWithFeedback.map((session) => (
-              <div
-                key={session.id}
-                className="bg-brand-blush/30 rounded-2xl p-4 border border-rose-100/70 space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-xs text-slate-900">
-                    Session with {session.mentorName} ({session.mentorCollege})
-                  </h4>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Domain Verified Note
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500">Topic: {session.topic}</p>
-
-                <p className="text-xs text-slate-700 mt-2 italic bg-white/90 p-3 rounded-xl border border-rose-50">
-                  "{session.review}"
-                </p>
-              </div>
-            ))}
+      {/* Weekly Goals with SVG Progress Ring */}
+      <div className="clay-card p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-rose-100">
+          <div>
+            <h3 className="text-lg font-black text-slate-900">
+              Weekly Milestone Goals
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Keep regular contact with your senior mentors to resolve blockers early.
+            </p>
           </div>
-        )}
+
+          {/* SVG Progress Ring */}
+          <div className="flex items-center gap-4 bg-white/90 p-3 rounded-2xl border border-rose-100 shadow-2xs">
+            <div className="relative w-16 h-16 shrink-0">
+              <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-rose-100"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className="text-brand-rose"
+                  strokeDasharray={`${overallGoalProgress}, 100`}
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center font-black text-xs text-brand-maroon">
+                {overallGoalProgress}%
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">Weekly Target</p>
+              <p className="text-[10px] text-slate-500">2 of 3 milestones done</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Goals List */}
+        <div className="mt-6 space-y-3">
+          {weeklyGoals.map((goal) => (
+            <div
+              key={goal.id}
+              className={`p-4 rounded-2xl border flex items-center justify-between text-xs transition-colors ${
+                goal.completed ? 'bg-emerald-50/70 border-emerald-200' : 'bg-white border-rose-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    goal.completed ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className={`font-bold ${goal.completed ? 'text-emerald-950 line-through' : 'text-slate-800'}`}>
+                    {goal.title}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Progress: {goal.current} / {goal.total} tasks
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                  goal.completed ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-50 text-brand-rose'
+                }`}
+              >
+                {goal.completed ? 'Completed' : 'In Progress'}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
