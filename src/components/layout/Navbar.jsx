@@ -16,17 +16,18 @@ import {
   Search,
   BookOpen,
   Calendar,
-  Layers
+  Layers,
+  AlertTriangle
 } from 'lucide-react';
 
 export const Navbar = ({ onToggleSidebar }) => {
   const {
     role,
+    currentUser,
     studentUser,
-    mentors,
     currentMentor,
-    activeMentorId,
-    switchDemoMentor,
+    verifyMentorEmail,
+    isFirebaseConfigured,
     notifications,
     unreadCount,
     markNotificationRead,
@@ -41,13 +42,11 @@ export const Navbar = ({ onToggleSidebar }) => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showMentorSwitcher, setShowMentorSwitcher] = useState(false);
   const [streamModalOpen, setStreamModalOpen] = useState(false);
   const [navSearch, setNavSearch] = useState('');
 
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
-  const mentorSwitchRef = useRef(null);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -58,15 +57,13 @@ export const Navbar = ({ onToggleSidebar }) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowUserMenu(false);
       }
-      if (mentorSwitchRef.current && !mentorSwitchRef.current.contains(e.target)) {
-        setShowMentorSwitcher(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const isStudent = role === 'student';
+  const isMentorVerified = isStudent ? true : currentUser?.emailVerified !== false;
 
   // Compute page title
   const getPageTitle = () => {
@@ -130,7 +127,7 @@ export const Navbar = ({ onToggleSidebar }) => {
               <p className="text-[10px] text-slate-500 font-medium hidden sm:block mt-0.5">
                 {isStudent
                   ? `Welcome, ${studentUser.name} • ${selectedStream}`
-                  : `Senior Mentor Workspace • ${currentMentor.collegeShort}`}
+                  : `Senior Mentor Workspace • ${currentMentor.collegeShort || currentMentor.college}`}
               </p>
             </div>
           </div>
@@ -151,6 +148,14 @@ export const Navbar = ({ onToggleSidebar }) => {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            {/* Prototype Mode Indicator Pill */}
+            {!isFirebaseConfigured && (
+              <span className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Prototype mode
+              </span>
+            )}
+
             {/* Student Stream Switcher in Top Bar */}
             {isStudent && (
               <button
@@ -164,122 +169,23 @@ export const Navbar = ({ onToggleSidebar }) => {
               </button>
             )}
 
-            {/* Mentor Track: Switch Demo Mentor Dropdown (Lists all 13 grouped by stream) */}
+            {/* Mentor Track: Verification Status Pill */}
             {!isStudent && (
-              <div className="relative" ref={mentorSwitchRef}>
-                <button
-                  onClick={() => setShowMentorSwitcher(!showMentorSwitcher)}
-                  className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-rose-200 shadow-2xs text-xs font-bold text-brand-maroon hover:bg-rose-50 transition-all cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="hidden sm:inline truncate max-w-[130px]">
-                    {currentMentor.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    ({currentMentor.stream.split(' ')[0]})
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
-
-                {showMentorSwitcher && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-elevated border border-rose-100 p-2 z-50 animate-in fade-in max-h-96 overflow-y-auto">
-                    <div className="p-2 border-b border-rose-100">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Switch Active Senior Mentor (13 Verified)
-                      </p>
-                    </div>
-
-                    {/* Science (PCB) */}
-                    <div className="pt-2 pb-1 px-2 text-[10px] font-bold text-emerald-700 uppercase">
-                      Science (PCB)
-                    </div>
-                    {mentors.filter(m => m.stream === 'Science (PCB)').map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          switchDemoMentor(m.id);
-                          setShowMentorSwitcher(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-bold">{m.name}</p>
-                          <p className="text-[10px] text-slate-500">{m.collegeShort}</p>
-                        </div>
-                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
-                      </button>
-                    ))}
-
-                    {/* Science (PCM) */}
-                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-blue-700 uppercase border-t border-rose-50 mt-1">
-                      Science (PCM)
-                    </div>
-                    {mentors.filter(m => m.stream === 'Science (PCM)').map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          switchDemoMentor(m.id);
-                          setShowMentorSwitcher(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-bold">{m.name}</p>
-                          <p className="text-[10px] text-slate-500">{m.collegeShort}</p>
-                        </div>
-                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
-                      </button>
-                    ))}
-
-                    {/* Arts */}
-                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-purple-700 uppercase border-t border-rose-50 mt-1">
-                      Arts & Humanities
-                    </div>
-                    {mentors.filter(m => m.stream === 'Arts').map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          switchDemoMentor(m.id);
-                          setShowMentorSwitcher(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-bold">{m.name}</p>
-                          <p className="text-[10px] text-slate-500">{m.collegeShort} • Demo</p>
-                        </div>
-                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
-                      </button>
-                    ))}
-
-                    {/* Commerce */}
-                    <div className="pt-3 pb-1 px-2 text-[10px] font-bold text-amber-700 uppercase border-t border-rose-50 mt-1">
-                      Commerce & Management
-                    </div>
-                    {mentors.filter(m => m.stream === 'Commerce').map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          switchDemoMentor(m.id);
-                          setShowMentorSwitcher(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-2xl text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          activeMentorId === m.id ? 'bg-[#FFF1F3] text-brand-maroon font-bold' : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-bold">{m.name}</p>
-                          <p className="text-[10px] text-slate-500">{m.collegeShort} • Demo</p>
-                        </div>
-                        {activeMentorId === m.id && <CheckCircle2 className="w-3.5 h-3.5 text-brand-rose" />}
-                      </button>
-                    ))}
+              <div>
+                {!isMentorVerified ? (
+                  <button
+                    onClick={verifyMentorEmail}
+                    className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 text-amber-800 px-3 py-1 rounded-full text-xs font-bold shadow-2xs hover:bg-amber-100 transition-all cursor-pointer"
+                    title="Click to simulate email verification in prototype mode"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Verification pending</span>
+                    <span className="underline ml-0.5 text-[10px] text-amber-900">Verify Now</span>
+                  </button>
+                ) : (
+                  <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Verified Senior</span>
                   </div>
                 )}
               </div>
@@ -308,7 +214,7 @@ export const Navbar = ({ onToggleSidebar }) => {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllNotificationsRead}
-                        className="text-[10px] text-brand-rose font-bold hover:underline"
+                        className="text-[10px] text-brand-rose font-bold hover:underline cursor-pointer"
                       >
                         Mark all as read
                       </button>
@@ -345,7 +251,7 @@ export const Navbar = ({ onToggleSidebar }) => {
                 className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-white border border-rose-200/80 shadow-2xs hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-rose to-brand-maroon text-white text-[10px] font-bold flex items-center justify-center">
-                  {isStudent ? studentUser.initials : currentMentor.initials}
+                  {isStudent ? (studentUser.initials || 'ST') : (currentMentor.initials || 'MN')}
                 </div>
                 <span className="hidden sm:inline text-xs font-bold text-slate-800 truncate max-w-[80px]">
                   {isStudent ? studentUser.name.split(' ')[0] : currentMentor.name.split(' ')[0]}
@@ -362,6 +268,11 @@ export const Navbar = ({ onToggleSidebar }) => {
                     <p className="text-[10px] text-brand-rose font-medium truncate">
                       {isStudent ? studentUser.email : currentMentor.email}
                     </p>
+                    {isStudent && currentUser?.isDemo && (
+                      <span className="mt-1 inline-block text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        Demo Account
+                      </span>
+                    )}
                   </div>
 
                   <div className="py-1">

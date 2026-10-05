@@ -34,7 +34,7 @@ export const VideoCallRoom = () => {
     id: sessionId || 'sess-demo',
     mentorName: 'Bhanu Kumar Pandey',
     mentorCollege: 'IISER Kolkata',
-    studentName: 'Aparna Tiwari',
+    studentName: studentUser?.name || 'Student',
     topic: 'Research Path vs Engineering Transition & Study Routine',
     roomCode: 'iyapp-meet-492'
   };
@@ -72,7 +72,7 @@ export const VideoCallRoom = () => {
     {
       id: 1,
       sender: partnerName,
-      text: `Hello ${isStudent ? 'Aparna' : 'Bhanu'}! Can you hear me clearly?`,
+      text: `Hello ${isStudent ? (studentUser?.name ? studentUser.name.split(' ')[0] : 'there') : (session.mentorName ? session.mentorName.split(' ')[0] : 'Mentor')}! Can you hear me clearly?`,
       time: '14:20',
       isMe: false
     },

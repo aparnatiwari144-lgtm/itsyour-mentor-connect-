@@ -54,8 +54,8 @@ export const INITIAL_MENTORS = [
     reviews: [
       {
         id: "rev-1",
-        studentName: "Aparna Tiwari",
-        college: "ABES EC Ghaziabad",
+        studentName: "Ananya Sharma",
+        college: "DAV Public School",
         date: "2 days ago",
         comment: "Bhanu bhaiya cleared all my confusions regarding pure science vs engineering research. His timetable framework has already reduced my exam anxiety!"
       },
@@ -272,8 +272,8 @@ export const INITIAL_MENTORS = [
     reviews: [
       {
         id: "rev-501",
-        studentName: "Aparna Tiwari",
-        college: "ABES EC Ghaziabad",
+        studentName: "Pooja Verma",
+        college: "Delhi Technological University",
         date: "1 week ago",
         comment: "Mausmi di gave me tremendous confidence! She explained how to build a strong portfolio in college while keeping GPA high."
       }

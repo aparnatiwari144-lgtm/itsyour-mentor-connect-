@@ -32,6 +32,19 @@ export const StudentProfile = () => {
     interestsString: studentUser.interests ? studentUser.interests.join(', ') : ''
   });
 
+  React.useEffect(() => {
+    setFormData({
+      name: studentUser.name || '',
+      email: studentUser.email || '',
+      college: studentUser.college || '',
+      degree: studentUser.degree || studentUser.classYear || '',
+      batch: studentUser.batch || '2026 Batch',
+      stream: selectedStream || 'Science (PCM)',
+      bio: studentUser.bio || 'Exploring subject roadmaps and career guidance.',
+      interestsString: studentUser.interests ? studentUser.interests.join(', ') : 'Exams, Roadmaps'
+    });
+  }, [studentUser, selectedStream]);
+
   const handleSave = (e) => {
     e.preventDefault();
     updateStudentProfile({

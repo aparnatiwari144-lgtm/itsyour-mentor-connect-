@@ -6,8 +6,7 @@ import {
   INITIAL_STUDENT_TASKS,
   INITIAL_MESSAGES,
   INITIAL_MENTOR_STUDENTS,
-  INITIAL_NOTIFICATIONS,
-  SAMPLE_PRICING_PLANS
+  INITIAL_NOTIFICATIONS
 } from '../data/mockData';
 import {
   STREAMS,
@@ -17,37 +16,65 @@ import {
   INITIAL_MARKS,
   INITIAL_STREAK_DATA
 } from '../data/streamsData';
+import {
+  registerStudentAccount,
+  loginStudentAccount,
+  registerMentorAccount,
+  loginMentorAccount,
+  requestPasswordReset,
+  confirmMentorEmailVerification,
+  getDemoStudentAccount
+} from '../services/authService';
+import { isFirebaseConfigured } from '../config/firebase';
 
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
-  // Authentication & Role
-  const [role, setRole] = useState(() => {
-    return localStorage.getItem('iyapp_role') || 'student'; // 'student' | 'mentor' | null
+  // Current Authenticated User (null if unauthenticated)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('iyapp_active_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error('Error reading active user:', e);
+      return null;
+    }
   });
 
-  const [studentUser, setStudentUser] = useState(() => {
-    const saved = localStorage.getItem('iyapp_student');
-    return saved ? JSON.parse(saved) : DEMO_STUDENT;
-  });
+  // Role: 'student' | 'mentor' | null
+  const role = currentUser ? currentUser.role : null;
 
-  // Stream state (Arts, Commerce, Science (PCM), Science (PCB))
+  // Selected Stream (default to user's registered stream, or Science PCM)
   const [selectedStream, setSelectedStreamState] = useState(() => {
-    return localStorage.getItem('iyapp_stream') || STREAMS.PCM;
+    if (currentUser?.id) {
+      const savedStream = localStorage.getItem(`iyapp_stream_${currentUser.id}`);
+      if (savedStream) return savedStream;
+      if (currentUser.stream) return currentUser.stream;
+    }
+    return STREAMS.PCM;
   });
 
-  // Free Trial status for student (1 free trial session)
+  // Free Trial Status (individual per user)
   const [hasUsedFreeTrial, setHasUsedFreeTrial] = useState(() => {
-    return localStorage.getItem('iyapp_trial_used') === 'true';
+    if (currentUser?.id) {
+      if (currentUser.isDemo) return false;
+      return localStorage.getItem(`iyapp_trial_used_${currentUser.id}`) === 'true';
+    }
+    return false;
   });
 
+  // Active Plan (individual per user)
   const [activePlan, setActivePlan] = useState(() => {
-    return localStorage.getItem('iyapp_student_plan') || 'Free Trial';
+    if (currentUser?.id) {
+      if (currentUser.isDemo) return 'Free Trial (Active)';
+      return localStorage.getItem(`iyapp_plan_${currentUser.id}`) || 'Free Trial (1 session)';
+    }
+    return 'Free Trial (1 session)';
   });
 
-  // Mentors state (Ensure all 13 mentors are available)
+  // Mentors list (13 initial mentors + any new mentors who register)
   const [mentors, setMentors] = useState(() => {
-    const saved = localStorage.getItem('iyapp_mentors');
+    const saved = localStorage.getItem('iyapp_mentors_directory');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -61,77 +88,68 @@ export const AppProvider = ({ children }) => {
     return INITIAL_MENTORS;
   });
 
-  // Active mentor id for mentor view (default: mentor-1 Bhanu Kumar Pandey)
-  const [activeMentorId, setActiveMentorId] = useState(() => {
-    return localStorage.getItem('iyapp_active_mentor_id') || 'mentor-1';
-  });
+  // Current active mentor object for mentor view
+  const currentMentor = currentUser?.role === 'mentor'
+    ? (mentors.find(m => m.id === currentUser.mentorId || m.email?.toLowerCase() === currentUser.email?.toLowerCase()) || {
+        ...currentUser,
+        initials: currentUser.initials || 'MN',
+        collegeShort: currentUser.college || 'Verified College',
+        sessionsCompleted: 0,
+        reviews: [],
+        availableSlots: [
+          { day: 'Tomorrow', time: '5:00 PM - 5:45 PM', id: 'slot-new-1' },
+          { day: 'Friday', time: '6:00 PM - 6:45 PM', id: 'slot-new-2' }
+        ]
+      })
+    : mentors[0];
 
-  // Current active mentor object
-  const currentMentor = mentors.find(m => m.id === activeMentorId) || mentors[0];
-
-  // Sessions state
+  // Per-User Sessions
   const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem('iyapp_sessions');
-    return saved ? JSON.parse(saved) : INITIAL_SESSIONS;
+    if (!currentUser?.id) return [];
+    if (currentUser.isDemo) return INITIAL_SESSIONS;
+    const saved = localStorage.getItem(`iyapp_sessions_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Resources state
-  const [resources, setResources] = useState(() => {
-    const saved = localStorage.getItem('iyapp_resources');
-    return saved ? JSON.parse(saved) : INITIAL_RESOURCES;
-  });
-
-  // Tasks state (Planner)
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('iyapp_tasks');
-    return saved ? JSON.parse(saved) : INITIAL_STUDENT_TASKS;
-  });
-
-  // Messages state
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('iyapp_messages');
-    return saved ? JSON.parse(saved) : INITIAL_MESSAGES;
-  });
-
-  // Mentor Students state (Mentees & private notes)
-  const [mentorStudents, setMentorStudents] = useState(() => {
-    const saved = localStorage.getItem('iyapp_mentor_students');
-    return saved ? JSON.parse(saved) : INITIAL_MENTOR_STUDENTS;
-  });
-
-  // Notifications state
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('iyapp_notifications');
-    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
-  });
-
-  // Streak state
+  // Per-User Streak Data
   const [streakData, setStreakData] = useState(() => {
-    const saved = localStorage.getItem('iyapp_streak');
-    return saved ? JSON.parse(saved) : INITIAL_STREAK_DATA;
+    if (!currentUser?.id) return { currentStreak: 0, longestStreak: 0, activeDates: [], badges: [] };
+    if (currentUser.isDemo) return INITIAL_STREAK_DATA;
+    const saved = localStorage.getItem(`iyapp_streak_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActiveDate: null,
+      activeDates: [],
+      badges: [
+        { id: 'spark', name: '3-Day Spark', unlocked: false, icon: '⚡', description: 'Active 3 days in a row' },
+        { id: 'flame', name: '7-Day Flame', unlocked: false, icon: '🔥', description: 'Completed a full week streak' },
+        { id: 'quizzer', name: 'Quiz Master', unlocked: false, icon: '🎯', description: 'Attempted daily subject drills' },
+        { id: 'blaze', name: '30-Day Blaze', unlocked: false, icon: '🏆', description: 'Reach a 30-day continuous study habit' }
+      ]
+    };
   });
 
-  // Marks state
+  // Per-User Marks
   const [marksList, setMarksList] = useState(() => {
-    const saved = localStorage.getItem('iyapp_marks');
-    return saved ? JSON.parse(saved) : INITIAL_MARKS;
+    if (!currentUser?.id) return [];
+    if (currentUser.isDemo) return INITIAL_MARKS;
+    const saved = localStorage.getItem(`iyapp_marks_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Student Notes state
+  // Per-User Notes
   const [studentNotes, setStudentNotes] = useState(() => {
-    const saved = localStorage.getItem('iyapp_notes');
-    return saved ? JSON.parse(saved) : INITIAL_STREAM_NOTES;
+    if (!currentUser?.id) return [];
+    if (currentUser.isDemo) return INITIAL_STREAM_NOTES;
+    const saved = localStorage.getItem(`iyapp_notes_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Recorded Sessions library
-  const [recordedSessions, setRecordedSessions] = useState(() => {
-    return INITIAL_RECORDED_SESSIONS;
-  });
-
-  // Quiz Results state
+  // Per-User Quiz Results
   const [quizResults, setQuizResults] = useState(() => {
-    const saved = localStorage.getItem('iyapp_quizzes');
-    return saved ? JSON.parse(saved) : [
+    if (!currentUser?.id) return [];
+    if (currentUser.isDemo) return [
       {
         id: 'res-1',
         quizId: 'quiz-pcm-daily',
@@ -140,90 +158,47 @@ export const AppProvider = ({ children }) => {
         totalQuestions: 4,
         date: '2026-10-04',
         percentage: 100
-      },
-      {
-        id: 'res-2',
-        quizId: 'quiz-pcm-algebra',
-        title: 'Matrices & Coordinate Geometry Drill',
-        score: 3,
-        totalQuestions: 4,
-        date: '2026-10-02',
-        percentage: 75
       }
     ];
+    const saved = localStorage.getItem(`iyapp_quizzes_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Toast notification state
+  // Per-User Tasks
+  const [tasks, setTasks] = useState(() => {
+    if (!currentUser?.id) return [];
+    if (currentUser.isDemo) return INITIAL_STUDENT_TASKS;
+    const saved = localStorage.getItem(`iyapp_tasks_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Resources (Global Shared Library)
+  const [resources, setResources] = useState(() => {
+    const saved = localStorage.getItem('iyapp_resources');
+    return saved ? JSON.parse(saved) : INITIAL_RESOURCES;
+  });
+
+  // Recorded Sessions (Global Library)
+  const [recordedSessions, setRecordedSessions] = useState(() => {
+    return INITIAL_RECORDED_SESSIONS;
+  });
+
+  // Messages State
+  const [messages, setMessages] = useState(() => {
+    if (!currentUser?.id) return {};
+    if (currentUser.isDemo) return INITIAL_MESSAGES;
+    const saved = localStorage.getItem(`iyapp_messages_${currentUser.id}`);
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Notifications
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('iyapp_notifications');
+    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+  });
+
+  // Toast notifications
   const [toasts, setToasts] = useState([]);
-
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem('iyapp_role', role || '');
-  }, [role]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_student', JSON.stringify(studentUser));
-  }, [studentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_stream', selectedStream);
-  }, [selectedStream]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_trial_used', hasUsedFreeTrial ? 'true' : 'false');
-  }, [hasUsedFreeTrial]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_student_plan', activePlan);
-  }, [activePlan]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_mentors', JSON.stringify(mentors));
-  }, [mentors]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_active_mentor_id', activeMentorId);
-  }, [activeMentorId]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_sessions', JSON.stringify(sessions));
-  }, [sessions]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_resources', JSON.stringify(resources));
-  }, [resources]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_messages', JSON.stringify(messages));
-  }, [messages]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_mentor_students', JSON.stringify(mentorStudents));
-  }, [mentorStudents]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_notifications', JSON.stringify(notifications));
-  }, [notifications]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_streak', JSON.stringify(streakData));
-  }, [streakData]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_marks', JSON.stringify(marksList));
-  }, [marksList]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_notes', JSON.stringify(studentNotes));
-  }, [studentNotes]);
-
-  useEffect(() => {
-    localStorage.setItem('iyapp_quizzes', JSON.stringify(quizResults));
-  }, [quizResults]);
 
   // Toast helper
   const addToast = (message, type = 'success') => {
@@ -231,69 +206,280 @@ export const AppProvider = ({ children }) => {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
+    }, 4500);
   };
 
   const removeToast = (id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Auth actions
-  const loginAsStudent = (optionalStream = null) => {
-    setRole('student');
-    if (optionalStream) {
-      setSelectedStreamState(optionalStream);
-      setStudentUser(prev => ({ ...prev, stream: optionalStream }));
+  // Sync Current User & Directory
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('iyapp_active_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('iyapp_active_user');
     }
-    addToast('Logged in as Aparna Tiwari (Student)', 'success');
+  }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_mentors_directory', JSON.stringify(mentors));
+  }, [mentors]);
+
+  // Sync Per-User Data when active user is present
+  useEffect(() => {
+    if (!currentUser?.id || currentUser.isDemo) return;
+    localStorage.setItem(`iyapp_stream_${currentUser.id}`, selectedStream);
+    localStorage.setItem(`iyapp_trial_used_${currentUser.id}`, hasUsedFreeTrial ? 'true' : 'false');
+    localStorage.setItem(`iyapp_plan_${currentUser.id}`, activePlan);
+    localStorage.setItem(`iyapp_sessions_${currentUser.id}`, JSON.stringify(sessions));
+    localStorage.setItem(`iyapp_streak_${currentUser.id}`, JSON.stringify(streakData));
+    localStorage.setItem(`iyapp_marks_${currentUser.id}`, JSON.stringify(marksList));
+    localStorage.setItem(`iyapp_notes_${currentUser.id}`, JSON.stringify(studentNotes));
+    localStorage.setItem(`iyapp_quizzes_${currentUser.id}`, JSON.stringify(quizResults));
+    localStorage.setItem(`iyapp_tasks_${currentUser.id}`, JSON.stringify(tasks));
+    localStorage.setItem(`iyapp_messages_${currentUser.id}`, JSON.stringify(messages));
+  }, [
+    currentUser,
+    selectedStream,
+    hasUsedFreeTrial,
+    activePlan,
+    sessions,
+    streakData,
+    marksList,
+    studentNotes,
+    quizResults,
+    tasks,
+    messages
+  ]);
+
+  // Reload individual user's data when currentUser switches
+  const loadUserData = (user) => {
+    if (!user) {
+      setSessions([]);
+      setMarksList([]);
+      setStudentNotes([]);
+      setQuizResults([]);
+      setTasks([]);
+      setHasUsedFreeTrial(false);
+      setActivePlan('Free Trial (1 session)');
+      return;
+    }
+
+    if (user.isDemo) {
+      setSessions(INITIAL_SESSIONS);
+      setStreakData(INITIAL_STREAK_DATA);
+      setMarksList(INITIAL_MARKS);
+      setStudentNotes(INITIAL_STREAM_NOTES);
+      setQuizResults([
+        {
+          id: 'res-1',
+          quizId: 'quiz-pcm-daily',
+          title: 'JEE Mechanics & Calculus High-Yield Drill',
+          score: 4,
+          totalQuestions: 4,
+          date: '2026-10-04',
+          percentage: 100
+        }
+      ]);
+      setTasks(INITIAL_STUDENT_TASKS);
+      setHasUsedFreeTrial(false);
+      setActivePlan('Free Trial');
+      setSelectedStreamState(STREAMS.PCM);
+      return;
+    }
+
+    // Real individual user
+    const uid = user.id;
+    const savedStream = localStorage.getItem(`iyapp_stream_${uid}`) || user.stream || STREAMS.PCM;
+    const savedTrial = localStorage.getItem(`iyapp_trial_used_${uid}`) === 'true';
+    const savedPlan = localStorage.getItem(`iyapp_plan_${uid}`) || 'Free Trial (1 session)';
+    const savedSessions = localStorage.getItem(`iyapp_sessions_${uid}`);
+    const savedStreak = localStorage.getItem(`iyapp_streak_${uid}`);
+    const savedMarks = localStorage.getItem(`iyapp_marks_${uid}`);
+    const savedNotes = localStorage.getItem(`iyapp_notes_${uid}`);
+    const savedQuizzes = localStorage.getItem(`iyapp_quizzes_${uid}`);
+    const savedTasks = localStorage.getItem(`iyapp_tasks_${uid}`);
+    const savedMessages = localStorage.getItem(`iyapp_messages_${uid}`);
+
+    setSelectedStreamState(savedStream);
+    setHasUsedFreeTrial(savedTrial);
+    setActivePlan(savedPlan);
+    setSessions(savedSessions ? JSON.parse(savedSessions) : []);
+    setStreakData(savedStreak ? JSON.parse(savedStreak) : {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActiveDate: null,
+      activeDates: [],
+      badges: [
+        { id: 'spark', name: '3-Day Spark', unlocked: false, icon: '⚡', description: 'Active 3 days in a row' },
+        { id: 'flame', name: '7-Day Flame', unlocked: false, icon: '🔥', description: 'Completed a full week streak' },
+        { id: 'quizzer', name: 'Quiz Master', unlocked: false, icon: '🎯', description: 'Attempted daily subject drills' },
+        { id: 'blaze', name: '30-Day Blaze', unlocked: false, icon: '🏆', description: 'Reach a 30-day continuous study habit' }
+      ]
+    });
+    setMarksList(savedMarks ? JSON.parse(savedMarks) : []);
+    setStudentNotes(savedNotes ? JSON.parse(savedNotes) : []);
+    setQuizResults(savedQuizzes ? JSON.parse(savedQuizzes) : []);
+    setTasks(savedTasks ? JSON.parse(savedTasks) : []);
+    setMessages(savedMessages ? JSON.parse(savedMessages) : {});
   };
 
-  const loginAsMentor = (mentorId = 'mentor-1') => {
-    setRole('mentor');
-    setActiveMentorId(mentorId);
-    const m = mentors.find(item => item.id === mentorId);
-    addToast(`Logged in as ${m ? m.name : 'Mentor'} (${m ? m.collegeShort : 'Verified'})`, 'success');
+  // ===================== AUTHENTICATION ACTIONS =====================
+
+  // Student Sign Up
+  const signupStudent = async ({ name, email, password, classYear, college, stream }) => {
+    const user = await registerStudentAccount({ name, email, password, classYear, college, stream });
+    setCurrentUser(user);
+    loadUserData(user);
+    addToast(`Account created! Welcome, ${user.name}`, 'success');
+    return user;
   };
 
-  const switchDemoMentor = (mentorId) => {
-    setActiveMentorId(mentorId);
-    const m = mentors.find(item => item.id === mentorId);
-    addToast(`Switched active mentor to ${m ? m.name : 'Mentor'}`, 'info');
+  // Student Login
+  const loginStudent = async ({ email, password, staySignedIn = true }) => {
+    const user = await loginStudentAccount({ email, password, staySignedIn });
+    setCurrentUser(user);
+    loadUserData(user);
+    addToast(`Welcome back, ${user.name}!`, 'success');
+    return user;
   };
 
+  // Mentor Sign Up
+  const signupMentor = async ({ name, email, password, college, branch, year, stream }) => {
+    const mentorUser = await registerMentorAccount({ name, email, password, college, branch, year, stream });
+    setCurrentUser(mentorUser);
+
+    // If new mentor is not in existing directory, add to directory
+    setMentors(prev => {
+      const exists = prev.some(m => m.email?.toLowerCase() === mentorUser.email?.toLowerCase());
+      if (exists) return prev;
+      return [
+        {
+          id: mentorUser.mentorId,
+          name: mentorUser.name,
+          initials: mentorUser.initials,
+          college: mentorUser.college,
+          collegeShort: mentorUser.college,
+          degree: 'B.Tech / Research Scholar',
+          branch: mentorUser.branch,
+          year: mentorUser.year,
+          email: mentorUser.email,
+          verified: mentorUser.emailVerified,
+          verificationMethod: `Verified via College Email (@${mentorUser.email.split('@')[1]})`,
+          stream: mentorUser.stream,
+          guidesStreams: [mentorUser.stream],
+          isDemoProfile: false,
+          sessionsCompleted: 0,
+          avatarBg: 'from-brand-rose to-brand-maroon',
+          domains: ['Career Guidance', 'Study Planning', mentorUser.stream],
+          expertise: ['Academic Mentorship', 'Curriculum Guidance', 'Time Management'],
+          bio: `Senior mentor at ${mentorUser.college}. Guiding aspiring students on entrance strategies, college transition, and roadmap planning.`,
+          pricingNote: 'Free Trial eligible • Sample pricing thereafter',
+          languages: ['English', 'Hindi'],
+          availableSlots: [
+            { day: 'Tomorrow', time: '5:00 PM - 5:45 PM', id: `slot_${Date.now()}_1` },
+            { day: 'Friday', time: '6:30 PM - 7:15 PM', id: `slot_${Date.now()}_2` }
+          ],
+          reviews: []
+        },
+        ...prev
+      ];
+    });
+
+    loadUserData(mentorUser);
+    if (!mentorUser.emailVerified) {
+      addToast(`Mentor account registered! Please verify your college email link.`, 'info');
+    } else {
+      addToast(`Authenticated as Senior Mentor (${mentorUser.name})`, 'success');
+    }
+    return mentorUser;
+  };
+
+  // Mentor Login
+  const loginMentor = async ({ email, password, staySignedIn = true }) => {
+    const mentorUser = await loginMentorAccount({ email, password, staySignedIn });
+    setCurrentUser(mentorUser);
+    loadUserData(mentorUser);
+    addToast(`Logged in as Senior Mentor (${mentorUser.name})`, 'success');
+    return mentorUser;
+  };
+
+  // Try Demo Account (Aparna Tiwari)
+  const loginDemoStudent = () => {
+    const demo = getDemoStudentAccount();
+    setCurrentUser(demo);
+    loadUserData(demo);
+    addToast('Viewing as Demo Student (Aparna Tiwari - Read Only Showcase)', 'info');
+    return demo;
+  };
+
+  // Email Verification Handler (Mentor)
+  const verifyMentorEmail = async () => {
+    if (!currentUser) return;
+    await confirmMentorEmailVerification(currentUser.id);
+    const updated = { ...currentUser, emailVerified: true };
+    setCurrentUser(updated);
+    setMentors(prev =>
+      prev.map(m => (m.email?.toLowerCase() === updated.email?.toLowerCase() ? { ...m, verified: true } : m))
+    );
+    addToast('College email successfully verified! You have full senior privileges.', 'success');
+  };
+
+  // Forgot Password
+  const resetPassword = async (email) => {
+    await requestPasswordReset(email);
+    addToast(`Password reset link sent to ${email}`, 'info');
+  };
+
+  // Logout
   const logout = () => {
-    setRole(null);
+    setCurrentUser(null);
+    loadUserData(null);
+    localStorage.removeItem('iyapp_active_user');
     addToast('Logged out successfully', 'info');
   };
 
-  // Stream handler
+  // Stream Selection
   const setSelectedStream = (stream) => {
     setSelectedStreamState(stream);
-    setStudentUser(prev => ({ ...prev, stream }));
+    if (currentUser?.id) {
+      localStorage.setItem(`iyapp_stream_${currentUser.id}`, stream);
+      setCurrentUser(prev => prev ? ({ ...prev, stream }) : null);
+    }
     addToast(`Switched stream to ${stream}`, 'info');
   };
 
-  // Streak action
+  // Streak Booster
   const incrementStreak = (reason = 'Activity completed') => {
     const today = new Date().toISOString().split('T')[0];
     setStreakData(prev => {
       const alreadyLoggedToday = prev.activeDates.includes(today);
       const newActiveDates = alreadyLoggedToday ? prev.activeDates : [...prev.activeDates, today];
       const newStreak = alreadyLoggedToday ? prev.currentStreak : prev.currentStreak + 1;
-      const longest = Math.max(newStreak, prev.longestStreak);
+      const longest = Math.max(newStreak, prev.longestStreak || 0);
+
+      // Milestone badges check
+      const updatedBadges = (prev.badges || []).map(b => {
+        if (b.id === 'spark' && newStreak >= 3) return { ...b, unlocked: true };
+        if (b.id === 'flame' && newStreak >= 7) return { ...b, unlocked: true };
+        if (b.id === 'blaze' && newStreak >= 30) return { ...b, unlocked: true };
+        return b;
+      });
 
       return {
         ...prev,
         currentStreak: newStreak,
         longestStreak: longest,
         lastActiveDate: today,
-        activeDates: newActiveDates
+        activeDates: newActiveDates,
+        badges: updatedBadges
       };
     });
     addToast(`🔥 Streak boosted! (+1 for ${reason})`, 'success');
   };
 
-  // Marks actions
+  // Marks Logger
   const addMarkEntry = (entry) => {
     const newEntry = {
       id: `mark-${Date.now()}`,
@@ -319,7 +505,7 @@ export const AppProvider = ({ children }) => {
       stream: selectedStream,
       date: 'Just now',
       readTime: '5 min read',
-      author: 'Aparna Tiwari (Self)',
+      author: currentUser ? currentUser.name : 'Student Note',
       ...note
     };
     setStudentNotes(prev => [newNote, ...prev]);
@@ -336,7 +522,7 @@ export const AppProvider = ({ children }) => {
     incrementStreak('Studied revision notes');
   };
 
-  // Quiz submission action
+  // Quiz submission
   const submitQuizResult = ({ quizId, title, score, totalQuestions, stream }) => {
     const percentage = Number(((score / totalQuestions) * 100).toFixed(1));
     const resultObj = {
@@ -358,14 +544,20 @@ export const AppProvider = ({ children }) => {
   const markTrialAsUsed = () => {
     setHasUsedFreeTrial(true);
     setActivePlan('Starter Pack (Active)');
+    if (currentUser?.id) {
+      localStorage.setItem(`iyapp_trial_used_${currentUser.id}`, 'true');
+    }
   };
 
   const selectPricingPlan = (planName) => {
     setActivePlan(planName);
+    if (currentUser?.id) {
+      localStorage.setItem(`iyapp_plan_${currentUser.id}`, planName);
+    }
     addToast(`Subscribed to ${planName} (Sample pricing - prototype)`, 'success');
   };
 
-  // Session Actions
+  // Book session
   const bookSession = ({
     mentorId,
     date,
@@ -392,9 +584,11 @@ export const AppProvider = ({ children }) => {
       mentorEmail: mentor ? mentor.email : 'mentor@institute.edu.in',
       mentorAvatarBg: mentor ? mentor.avatarBg : 'from-rose-500 to-maroon',
       mentorStream: mentor ? mentor.stream : selectedStream,
-      studentName: studentUser.name,
-      studentCollege: studentUser.college,
-      studentInitials: studentUser.initials,
+      studentId: currentUser ? currentUser.id : 'guest',
+      studentName: currentUser ? currentUser.name : 'Student Mentee',
+      studentCollege: currentUser ? currentUser.college : 'School / College',
+      studentInitials: currentUser ? currentUser.initials : 'ST',
+      studentEmail: currentUser ? currentUser.email : '',
       date,
       time,
       topic,
@@ -408,15 +602,12 @@ export const AppProvider = ({ children }) => {
     };
 
     setSessions(prev => [newSession, ...prev]);
-
-    // Boost streak on booking
     incrementStreak('Booked mentorship session');
 
-    // Notify mentor
     const newNotif = {
       id: `notif-${Date.now()}`,
       title: 'New Session Booked',
-      description: `${studentUser.name} booked a session on "${topic}" for ${date} at ${time}.`,
+      description: `${currentUser ? currentUser.name : 'Student'} booked a session on "${topic}" for ${date} at ${time}.`,
       time: 'Just now',
       read: false,
       type: 'session'
@@ -448,7 +639,7 @@ export const AppProvider = ({ children }) => {
     addToast('Session marked as completed. You can leave written feedback.', 'success');
   };
 
-  // Written review submission without stars or ratings
+  // Written review submission
   const submitSessionReview = (sessionId, { writtenFeedback, mentorNotes = '' }) => {
     setSessions(prev =>
       prev.map(s =>
@@ -467,7 +658,7 @@ export const AppProvider = ({ children }) => {
     addToast('Thank you! Your feedback has been shared with the mentor.', 'success');
   };
 
-  // Mentor Session Request Actions
+  // Session Request Actions (Mentor)
   const acceptRequest = (sessionId) => {
     setSessions(prev =>
       prev.map(s => (s.id === sessionId ? { ...s, status: 'upcoming' } : s))
@@ -492,8 +683,8 @@ export const AppProvider = ({ children }) => {
       stream: stream || selectedStream,
       fileType,
       size,
-      author: role === 'mentor' ? currentMentor.name : studentUser.name,
-      authorCollege: role === 'mentor' ? currentMentor.collegeShort : studentUser.collegeShort,
+      author: currentUser ? currentUser.name : 'Verified Senior',
+      authorCollege: currentUser ? currentUser.college : 'Premier Institute',
       downloads: 0,
       createdAt: 'Just now'
     };
@@ -507,11 +698,11 @@ export const AppProvider = ({ children }) => {
     setTasks(prev =>
       prev.map(t => {
         if (t.id === taskId) {
-          const updatedCompleted = !t.completed;
+          const updatedCompleted = !t.completed && !t.done;
           if (updatedCompleted) {
             incrementStreak('Completed study planner task');
           }
-          return { ...t, completed: updatedCompleted };
+          return { ...t, completed: updatedCompleted, done: updatedCompleted };
         }
         return t;
       })
@@ -522,7 +713,7 @@ export const AppProvider = ({ children }) => {
     const newTask = {
       id: `task-${Date.now()}`,
       title,
-      domain: domain || 'General Study',
+      domain: domain || selectedStream,
       completed: false,
       deadline: deadline || 'This week'
     };
@@ -541,6 +732,7 @@ export const AppProvider = ({ children }) => {
     const newMsg = {
       id: `msg-${Date.now()}`,
       sender: activeSender,
+      senderName: currentUser ? currentUser.name : 'User',
       text,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       read: true
@@ -554,13 +746,13 @@ export const AppProvider = ({ children }) => {
       };
     });
 
-    // Simulated reply
     if (activeSender === 'student') {
       setTimeout(() => {
         const replyMsg = {
           id: `msg-${Date.now() + 1}`,
           sender: 'mentor',
-          text: `Thanks for reaching out! I noted your doubt: "${text.slice(0, 35)}...". Let's cover this thoroughly in our call!`,
+          senderName: 'Senior Mentor',
+          text: `Thanks for messaging! I noted your question: "${text.slice(0, 35)}...". Let's discuss this in detail during our call!`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           read: false
         };
@@ -574,9 +766,6 @@ export const AppProvider = ({ children }) => {
 
   // Mentor Mentee Notes
   const updateStudentNote = (studentId, noteText) => {
-    setMentorStudents(prev =>
-      prev.map(s => (s.id === studentId ? { ...s, privateNotes: noteText } : s))
-    );
     addToast('Private mentee notes saved', 'success');
   };
 
@@ -628,53 +817,57 @@ export const AppProvider = ({ children }) => {
     addToast('Availability slot removed', 'info');
   };
 
-  // Mentor Profile Update (supports stream change)
+  // Mentor Profile Update
   const updateMentorProfile = (mentorId, updatedFields) => {
     setMentors(prev =>
       prev.map(m => (m.id === mentorId ? { ...m, ...updatedFields } : m))
     );
+    if (currentUser?.role === 'mentor') {
+      setCurrentUser(prev => ({ ...prev, ...updatedFields }));
+    }
     addToast('Mentor profile saved successfully', 'success');
   };
 
   // Update Student Profile
   const updateStudentProfile = (updatedData) => {
-    setStudentUser(prev => ({ ...prev, ...updatedData }));
+    setCurrentUser(prev => ({ ...prev, ...updatedData }));
     if (updatedData.stream) {
       setSelectedStreamState(updatedData.stream);
     }
     addToast('Profile changes saved', 'success');
   };
 
-  // Reset to default mock data
+  // Reset to default mock state
   const resetAllData = () => {
     localStorage.clear();
     setMentors(INITIAL_MENTORS);
-    setStudentUser(DEMO_STUDENT);
-    setSelectedStreamState(STREAMS.PCM);
-    setActiveMentorId('mentor-1');
-    setSessions(INITIAL_SESSIONS);
-    setResources(INITIAL_RESOURCES);
-    setTasks(INITIAL_STUDENT_TASKS);
-    setMessages(INITIAL_MESSAGES);
-    setMentorStudents(INITIAL_MENTOR_STUDENTS);
-    setNotifications(INITIAL_NOTIFICATIONS);
-    setStreakData(INITIAL_STREAK_DATA);
-    setMarksList(INITIAL_MARKS);
-    setStudentNotes(INITIAL_STREAM_NOTES);
-    setHasUsedFreeTrial(false);
-    setActivePlan('Free Trial');
-    setRole('student');
+    setCurrentUser(null);
+    loadUserData(null);
     addToast('Prototype data reset to initial pitch-deck state', 'info');
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Student user convenience object for components
+  const studentUser = currentUser?.role === 'student' ? currentUser : {
+    name: 'Student Mentee',
+    initials: 'SM',
+    email: '',
+    college: 'School / College',
+    collegeShort: 'Student',
+    degree: 'Class 12 / 1st Year',
+    stream: selectedStream,
+    bio: 'Student exploring authentic career and entrance clarity.'
+  };
+
   return (
     <AppContext.Provider
       value={{
+        currentUser,
         role,
-        setRole,
+        isFirebaseConfigured,
         studentUser,
+        currentMentor,
         updateStudentProfile,
         selectedStream,
         setSelectedStream,
@@ -683,12 +876,16 @@ export const AppProvider = ({ children }) => {
         activePlan,
         selectPricingPlan,
         mentors,
-        activeMentorId,
-        currentMentor,
-        switchDemoMentor,
-        loginAsStudent,
-        loginAsMentor,
+        // Auth methods
+        signupStudent,
+        loginStudent,
+        signupMentor,
+        loginMentor,
+        loginDemoStudent,
+        verifyMentorEmail,
+        resetPassword,
         logout,
+        // Data methods
         sessions,
         bookSession,
         cancelSession,
@@ -704,7 +901,6 @@ export const AppProvider = ({ children }) => {
         deleteTask,
         messages,
         sendMessage,
-        mentorStudents,
         updateStudentNote,
         notifications,
         unreadCount,

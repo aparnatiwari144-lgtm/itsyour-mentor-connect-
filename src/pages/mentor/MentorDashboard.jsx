@@ -15,40 +15,68 @@ import {
   Sparkles,
   Inbox,
   CreditCard,
-  ChevronDown
+  AlertTriangle
 } from 'lucide-react';
 
 export const MentorDashboard = () => {
   const navigate = useNavigate();
   const {
+    currentUser,
     currentMentor,
-    mentors,
-    activeMentorId,
-    switchDemoMentor,
+    verifyMentorEmail,
     sessions,
     acceptRequest,
     declineRequest
   } = useApp();
 
+  const isVerified = currentUser?.emailVerified !== false;
+
   // Mentor stats
   const mentorSessions = sessions.filter((s) => s.mentorId === currentMentor.id);
   const pendingRequests = mentorSessions.filter((s) => s.status === 'pending');
   const upcomingSessions = mentorSessions.filter((s) => s.status === 'upcoming');
-  const todaySessions = upcomingSessions.filter((s) => s.date.includes('Today'));
+  const todaySessions = upcomingSessions.filter((s) => s.date && s.date.includes('Today'));
 
   const totalSessionsDone = currentMentor.sessionsCompleted || 42;
   const hoursMentored = (totalSessionsDone * 0.75).toFixed(1);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 text-left">
+      {/* Verification Pending Banner if not verified */}
+      {!isVerified && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50/90 border border-amber-200 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-amber-900">Institutional Verification Pending</h4>
+              <p className="text-xs text-amber-800 mt-0.5">
+                We sent a confirmation link to <span className="font-mono font-semibold">{currentMentor.email}</span>. Until verified, new student bookings and public directory listing are paused.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={verifyMentorEmail}
+            className="clay-btn-primary px-4 py-2 text-xs font-bold shrink-0 self-start sm:self-auto cursor-pointer"
+          >
+            Simulate College Verification
+          </button>
+        </div>
+      )}
+
       {/* Mentor Welcome Banner with Clay Styling */}
       <div className="clay-card p-6 sm:p-8 bg-gradient-to-r from-white via-[#FFF8F9] to-[#FDE8EA] relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="max-w-2xl">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Verified Senior • {currentMentor.collegeShort}</span>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                isVerified
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
+              }`}>
+                <ShieldCheck className={`w-3.5 h-3.5 ${isVerified ? 'text-emerald-600' : 'text-amber-600'}`} />
+                <span>{isVerified ? `Verified Senior • ${currentMentor.collegeShort || currentMentor.college}` : 'Verification Pending'}</span>
               </span>
 
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFF1F3] text-brand-maroon text-xs font-bold border border-rose-200">
@@ -85,54 +113,30 @@ export const MentorDashboard = () => {
                   className="clay-btn-secondary px-5 py-2.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
                 >
                   <Video className="w-4 h-4 text-emerald-600" />
-                  <span>Start Today's Call ({todaySessions[0].time.split(' - ')[0]})</span>
+                  <span>Start Today's Call ({todaySessions[0].time?.split(' - ')[0]})</span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Quick Mentor Switcher on Dashboard */}
+          {/* Institutional Account Profile Card (Replaced demo switcher) */}
           <div className="bg-white/90 p-4 rounded-3xl border border-rose-100 shadow-soft w-full md:w-72 shrink-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Active Senior Demo Persona:
-            </p>
-            <select
-              value={activeMentorId}
-              onChange={(e) => switchDemoMentor(e.target.value)}
-              className="w-full text-xs font-semibold px-3 py-2 rounded-2xl bg-[#FFF6F7] border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose"
-            >
-              <optgroup label="Science (PCB)">
-                {mentors.filter(m => m.stream === 'Science (PCB)').map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.collegeShort})
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Science (PCM)">
-                {mentors.filter(m => m.stream === 'Science (PCM)').map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.collegeShort})
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Arts & Humanities">
-                {mentors.filter(m => m.stream === 'Arts').map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.collegeShort})
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Commerce & Management">
-                {mentors.filter(m => m.stream === 'Commerce').map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.collegeShort})
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-            <p className="text-[10px] text-slate-500 mt-2">
-              13 Verified seniors available across all 4 streams.
-            </p>
+            <div className="flex items-center gap-1.5 mb-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Institutional Credential:
+              </p>
+            </div>
+            <p className="text-xs font-bold text-slate-800 truncate">{currentMentor.college}</p>
+            <p className="text-[11px] text-slate-500 truncate mt-0.5">{currentMentor.branch}</p>
+            <div className="mt-3 pt-2.5 border-t border-rose-100 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400">Account Status</span>
+              <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] ${
+                isVerified ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+              }`}>
+                {isVerified ? '✓ Verified Senior' : '⏳ Pending Link'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -325,7 +329,7 @@ export const MentorDashboard = () => {
 
           <div className="mt-5 pt-3 border-t border-rose-100 text-center">
             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              ✓ Verified via {currentMentor.email.split('@')[1]}
+              ✓ Verified via {currentMentor.email?.split('@')[1]}
             </span>
           </div>
         </div>

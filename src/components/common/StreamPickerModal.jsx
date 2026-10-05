@@ -4,7 +4,7 @@ import { STREAMS_LIST } from '../../data/streamsData';
 import { CheckCircle2, Sparkles, X, ArrowRight } from 'lucide-react';
 
 export const StreamPickerModal = ({ isOpen, onClose, onSelect }) => {
-  const { selectedStream, setSelectedStream } = useApp();
+  const { selectedStream, setSelectedStream, studentUser } = useApp();
 
   if (!isOpen) return null;
 
@@ -109,7 +109,7 @@ export const StreamPickerModal = ({ isOpen, onClose, onSelect }) => {
 
         {/* Footer Note */}
         <div className="mt-6 text-center text-xs text-slate-500">
-          Current Demo Student: <strong className="text-slate-800">Aparna Tiwari</strong> • Active Stream: <span className="text-brand-rose font-bold">{selectedStream}</span>
+          Current Student: <strong className="text-slate-800">{studentUser?.name || 'Active Student'}</strong> • Active Stream: <span className="text-brand-rose font-bold">{selectedStream}</span>
         </div>
       </div>
     </div>

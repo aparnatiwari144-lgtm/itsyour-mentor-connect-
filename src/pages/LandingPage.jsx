@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { MentorLogo, MentorHeroIllustration } from '../components/common/MentorLogo';
 import { HeroDeviceMockup } from '../components/common/HeroDeviceMockup';
-import { STREAMS_LIST } from '../data/streamsData';
+import { STREAMS_LIST, STREAMS } from '../data/streamsData';
+import { REAL_MENTOR_EMAILS } from '../config/verifiedDomains';
 import {
   GraduationCap,
   ShieldCheck,
@@ -18,53 +19,212 @@ import {
   Users,
   Compass,
   Flame,
-  Award
+  Award,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  KeyRound,
+  School,
+  BookOpen,
+  HelpCircle
 } from 'lucide-react';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
-  const { loginAsStudent, loginAsMentor, mentors, role, selectedStream, setSelectedStream } = useApp();
+  const {
+    currentUser,
+    role,
+    isFirebaseConfigured,
+    signupStudent,
+    loginStudent,
+    signupMentor,
+    loginMentor,
+    loginDemoStudent,
+    resetPassword
+  } = useApp();
 
-  // Modal states for 1-click login dialogs
+  // Modal State
   const [modalRole, setModalRole] = useState(null); // 'student' | 'mentor' | null
-  const [emailInput, setEmailInput] = useState('aparna.tiwari25@abes.ac.in');
-  const [passwordInput, setPasswordInput] = useState('••••••••••');
-  const [chosenStream, setChosenStream] = useState(selectedStream || 'Science (PCM)');
-  const [selectedDemoMentor, setSelectedDemoMentor] = useState('mentor-1');
+  const [authTab, setAuthTab] = useState('login'); // 'login' | 'signup'
+  const [showPassword, setShowPassword] = useState(false);
+  const [staySignedIn, setStaySignedIn] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const openStudentModal = () => {
-    setEmailInput('aparna.tiwari25@abes.ac.in');
-    setPasswordInput('••••••••••');
-    setChosenStream(selectedStream || 'Science (PCM)');
+  // Forgot Password Modal State
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState({ loading: false, msg: '', error: '' });
+
+  // Form Fields
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Student Signup Fields
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
+  const [studentClass, setStudentClass] = useState('Class 12');
+  const [studentCollege, setStudentCollege] = useState('');
+  const [studentStream, setStudentStream] = useState(STREAMS.PCM);
+
+  // Mentor Signup Fields
+  const [mentorName, setMentorName] = useState('');
+  const [mentorEmail, setMentorEmail] = useState('');
+  const [mentorPassword, setMentorPassword] = useState('');
+  const [mentorCollege, setMentorCollege] = useState('NITK Surathkal');
+  const [mentorBranch, setMentorBranch] = useState('');
+  const [mentorYear, setMentorYear] = useState('1st Year (2026 Batch)');
+  const [mentorStream, setMentorStream] = useState(STREAMS.PCM);
+
+  const openStudentModal = (initialTab = 'login') => {
     setModalRole('student');
+    setAuthTab(initialTab);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setShowPassword(false);
+    setLoginEmail('');
+    setLoginPassword('');
   };
 
-  const openMentorModal = () => {
-    const defaultM = mentors.find(m => m.id === selectedDemoMentor) || mentors[0];
-    setEmailInput(defaultM.email);
-    setPasswordInput('••••••••••');
+  const openMentorModal = (initialTab = 'login') => {
     setModalRole('mentor');
+    setAuthTab(initialTab);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setShowPassword(false);
+    setLoginEmail('akashpatel.261ec105@nitk.edu.in');
+    setLoginPassword('MentorPass@2026');
   };
 
-  const handleModalSubmit = (e) => {
+  const closeModal = () => {
+    setModalRole(null);
+    setErrorMessage('');
+    setSuccessMessage('');
+  };
+
+  // Student Login Handler
+  const handleStudentLogin = async (e) => {
     e.preventDefault();
-    if (modalRole === 'student') {
-      loginAsStudent(chosenStream);
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      await loginStudent({
+        email: loginEmail,
+        password: loginPassword,
+        staySignedIn
+      });
       navigate('/student/dashboard');
-    } else {
-      loginAsMentor(selectedDemoMentor);
-      navigate('/mentor/dashboard');
+    } catch (err) {
+      setErrorMessage(err.message || 'Login failed. Please check credentials.');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Student Sign Up Handler
+  const handleStudentSignup = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      await signupStudent({
+        name: studentName,
+        email: studentEmail,
+        password: studentPassword,
+        classYear: studentClass,
+        college: studentCollege || 'School / College',
+        stream: studentStream
+      });
+      navigate('/student/dashboard');
+    } catch (err) {
+      setErrorMessage(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mentor Login Handler
+  const handleMentorLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      await loginMentor({
+        email: loginEmail,
+        password: loginPassword,
+        staySignedIn
+      });
+      navigate('/mentor/dashboard');
+    } catch (err) {
+      setErrorMessage(err.message || 'Mentor login failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mentor Sign Up Handler
+  const handleMentorSignup = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      await signupMentor({
+        name: mentorName,
+        email: mentorEmail,
+        password: mentorPassword,
+        college: mentorCollege,
+        branch: mentorBranch || 'Engineering / Sciences',
+        year: mentorYear,
+        stream: mentorStream
+      });
+      navigate('/mentor/dashboard');
+    } catch (err) {
+      setErrorMessage(err.message || 'Mentor signup failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Forgot Password Handler
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setForgotStatus({ loading: true, msg: '', error: '' });
+    try {
+      await resetPassword(forgotEmail);
+      setForgotStatus({
+        loading: false,
+        msg: 'Password reset link simulated and sent to your email!',
+        error: ''
+      });
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotStatus({ loading: false, msg: '', error: '' });
+      }, 2500);
+    } catch (err) {
+      setForgotStatus({
+        loading: false,
+        msg: '',
+        error: err.message || 'Failed to send password reset.'
+      });
+    }
+  };
+
+  // Demo Account 1-Click
+  const handleDemoAccountLogin = () => {
+    loginDemoStudent();
+    navigate('/student/dashboard');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#FFF8F9] to-[#FDE8EA] text-slate-800 font-poppins relative overflow-x-hidden selection:bg-brand-rose selection:text-white">
-      {/* Soft blurred ambient glow circles */}
+      {/* Soft ambient background glow circles */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-rose-200/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 left-10 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Bar: Line-art Logo + Brand Name */}
+      {/* Top Bar */}
       <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-white/60 px-4 sm:px-8 py-3.5 shadow-2xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -80,23 +240,31 @@ export const LandingPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {role ? (
+            {/* Prototype Mode Pill */}
+            {!isFirebaseConfigured && (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50/80 border border-amber-200 text-amber-900 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Prototype mode • Data stays in this browser
+              </span>
+            )}
+
+            {currentUser ? (
               <button
-                onClick={() => navigate(role === 'student' ? '/student/dashboard' : '/mentor/dashboard')}
+                onClick={() => navigate(currentUser.role === 'student' ? '/student/dashboard' : '/mentor/dashboard')}
                 className="clay-btn-primary px-5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
               >
-                Go to Workspace <ArrowRight className="w-3.5 h-3.5" />
+                Go to Workspace ({currentUser.name.split(' ')[0]}) <ArrowRight className="w-3.5 h-3.5" />
               </button>
             ) : (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={openStudentModal}
+                  onClick={() => openStudentModal('login')}
                   className="clay-btn-secondary px-4 py-1.5 text-xs font-semibold cursor-pointer"
                 >
                   Student Login
                 </button>
                 <button
-                  onClick={openMentorModal}
+                  onClick={() => openMentorModal('login')}
                   className="clay-btn-primary px-4 py-1.5 text-xs font-bold cursor-pointer"
                 >
                   Mentor Login
@@ -125,7 +293,7 @@ export const LandingPage = () => {
         </h1>
 
         <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
-          Verified seniors from IITs, NITs, IISERs, and premier central universities guiding you on exam roadmaps, subject choices, college counselling, and authentic career clarity across Arts, Commerce, and Science.
+          Verified seniors from IITs, NITs, IISERs, and premier universities guiding you on exam roadmaps, subject choices, college counselling, and authentic career clarity across Arts, Commerce, and Science.
         </p>
 
         {/* Line-Art Illustration Banner */}
@@ -137,7 +305,7 @@ export const LandingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-6 text-left">
           {/* Card 1: Login as Student */}
           <div
-            onClick={openStudentModal}
+            onClick={() => openStudentModal('login')}
             className="clay-card p-6 sm:p-7 cursor-pointer group hover:scale-[1.02] transition-all duration-300 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/40 rounded-full blur-2xl pointer-events-none" />
@@ -160,15 +328,15 @@ export const LandingPage = () => {
 
             <div className="mt-5 pt-4 border-t border-rose-100/70 flex items-center justify-between">
               <span className="text-xs font-bold text-brand-maroon flex items-center gap-1.5">
-                Sign In as Aparna Tiwari <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                Sign In or Register <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">Demo Ready</span>
+              <span className="text-[10px] text-slate-400 font-medium">Individual Accounts</span>
             </div>
           </div>
 
           {/* Card 2: Login as Mentor */}
           <div
-            onClick={openMentorModal}
+            onClick={() => openMentorModal('login')}
             className="clay-card p-6 sm:p-7 cursor-pointer group hover:scale-[1.02] transition-all duration-300 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/40 rounded-full blur-2xl pointer-events-none" />
@@ -186,7 +354,7 @@ export const LandingPage = () => {
               Login as Mentor
             </h3>
             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-              Manage schedule, accept session requests, host 1:1 video calls, and share study roadmaps.
+              Manage schedule, accept session requests, host 1:1 video calls, and share study roadmaps with aspiring juniors.
             </p>
 
             <div className="mt-4 px-3 py-2 rounded-xl bg-rose-50/70 border border-rose-100 text-[11px] font-medium text-brand-maroon flex items-center gap-1.5">
@@ -201,6 +369,17 @@ export const LandingPage = () => {
               <span className="text-[10px] text-slate-400 font-medium">13 Verified Mentors</span>
             </div>
           </div>
+        </div>
+
+        {/* Quick Demo Showcase Callout */}
+        <div className="mt-5 max-w-md mx-auto text-center">
+          <button
+            onClick={handleDemoAccountLogin}
+            className="text-xs font-semibold text-slate-500 hover:text-brand-maroon inline-flex items-center gap-1.5 transition-colors cursor-pointer bg-white/70 px-4 py-2 rounded-full border border-rose-100 shadow-2xs hover:bg-white"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Want to test immediately? <strong>Try demo account (Aparna Tiwari)</strong></span>
+          </button>
         </div>
 
         {/* Hero Visual: 3D Clay Laptop + Phone Mockup */}
@@ -252,167 +431,687 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Clay-Style Modal Dialog */}
+      {/* Clay-Style Authentication Modal with Log In & Sign Up Tabs */}
       {modalRole && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white/95 rounded-[36px] p-6 sm:p-8 shadow-[0_20px_50px_rgba(122,21,48,0.2)] border border-white/80 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white/95 rounded-[36px] p-6 sm:p-8 shadow-[0_20px_50px_rgba(122,21,48,0.2)] border border-white/80 max-h-[92vh] overflow-y-auto">
             {/* Close button */}
             <button
-              onClick={() => setModalRole(null)}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              onClick={closeModal}
+              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {/* Modal Heading */}
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white flex items-center justify-center mx-auto mb-3 shadow-[4px_6px_14px_rgba(179,38,62,0.25)]">
+            {/* Modal Heading & Icon */}
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white flex items-center justify-center mx-auto mb-2.5 shadow-[4px_6px_14px_rgba(179,38,62,0.25)]">
                 {modalRole === 'student' ? <GraduationCap className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
               </div>
               <h2 className="text-xl font-black text-slate-900">
-                {modalRole === 'student' ? 'Sign In as Student' : 'Sign In as Senior Mentor'}
+                {modalRole === 'student' ? 'Student Workspace' : 'Senior Mentor Portal'}
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {modalRole === 'student'
-                  ? 'Prototype authentication pre-filled for demo student Aparna Tiwari'
-                  : 'Verified seniors sign in with institutional college email'}
+                  ? 'Sign in to access your personal study track, marks, and free trial session'
+                  : 'Institutional login for verified seniors from IITs, NITs & IISERs'}
               </p>
             </div>
 
-            {/* Mentor Persona Selector */}
-            {modalRole === 'mentor' && (
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Select Demo Senior Profile:
-                </label>
-                <select
-                  value={selectedDemoMentor}
-                  onChange={(e) => {
-                    setSelectedDemoMentor(e.target.value);
-                    const chosen = mentors.find(m => m.id === e.target.value);
-                    if (chosen) setEmailInput(chosen.email);
-                  }}
-                  className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-[#FFF6F7] border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose"
-                >
-                  <optgroup label="Science (PCB)">
-                    {mentors.filter(m => m.stream === 'Science (PCB)').map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.collegeShort} ({m.stream})
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Science (PCM)">
-                    {mentors.filter(m => m.stream === 'Science (PCM)').map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.collegeShort} ({m.stream})
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Arts & Humanities">
-                    {mentors.filter(m => m.stream === 'Arts').map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.collegeShort} ({m.stream}) {m.isDemoProfile ? '• Demo' : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Commerce & Management">
-                    {mentors.filter(m => m.stream === 'Commerce').map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.collegeShort} ({m.stream}) {m.isDemoProfile ? '• Demo' : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+            {/* Tabs: Log In / Sign Up */}
+            <div className="flex p-1 bg-slate-100 rounded-2xl mb-5">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab('login');
+                  setErrorMessage('');
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  authTab === 'login'
+                    ? 'bg-white text-brand-maroon shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Log In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab('signup');
+                  setErrorMessage('');
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  authTab === 'signup'
+                    ? 'bg-white text-brand-maroon shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            {/* Error Message Alert */}
+            {errorMessage && (
+              <div className="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* Student Stream Selector in Modal */}
+            {/* Success Message Alert */}
+            {successMessage && (
+              <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+
+            {/* ==================== STUDENT FORMS ==================== */}
             {modalRole === 'student' && (
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Select Your Academic Stream:
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {STREAMS_LIST.map((st) => (
-                    <button
-                      type="button"
-                      key={st.id}
-                      onClick={() => setChosenStream(st.id)}
-                      className={`p-2.5 rounded-2xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                        chosenStream === st.id
-                          ? 'bg-[#FFF1F3] border-brand-rose text-brand-maroon shadow-xs ring-1 ring-brand-rose'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="text-base">{st.icon}</span>
-                      <div className="truncate">
-                        <p className="leading-tight truncate">{st.shortName}</p>
-                        <p className="text-[9px] font-normal text-slate-500 truncate">{st.subjects[0]}</p>
+              <>
+                {/* 1. Student Log In */}
+                {authTab === 'login' && (
+                  <form onSubmit={handleStudentLogin} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Student Email
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <input
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          required
+                          placeholder="e.g. yourname@gmail.com"
+                          className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
                       </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700">Password</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForgotEmail(loginEmail);
+                            setShowForgotPassword(true);
+                          }}
+                          className="text-[11px] font-bold text-brand-rose hover:underline cursor-pointer"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          required
+                          placeholder="Enter your account password"
+                          className="w-full text-xs font-medium pl-10 pr-10 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={staySignedIn}
+                          onChange={(e) => setStaySignedIn(e.target.checked)}
+                          className="rounded text-brand-rose focus:ring-brand-rose"
+                        />
+                        <span>Stay signed in</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
+                    >
+                      <span>{isLoading ? 'Signing in...' : 'Log In to Student Workspace'}</span>
+                      <ArrowRight className="w-4 h-4" />
                     </button>
-                  ))}
-                </div>
+
+                    <div className="pt-3 border-t border-rose-100 flex items-center justify-between text-xs text-slate-500">
+                      <span>Don't have an account?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('signup');
+                          setErrorMessage('');
+                        }}
+                        className="font-bold text-brand-maroon hover:underline cursor-pointer"
+                      >
+                        Create an account →
+                      </button>
+                    </div>
+
+                    {/* Try Demo Account Button */}
+                    <div className="mt-3 p-3 rounded-2xl bg-[#FFF6F7] border border-rose-200 text-center">
+                      <p className="text-[11px] text-slate-600 mb-1.5 font-medium">
+                        Looking for instant prototype evaluation?
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleDemoAccountLogin}
+                        className="clay-btn-secondary w-full py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Try Demo Account (Aparna Tiwari)</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* 2. Student Sign Up */}
+                {authTab === 'signup' && (
+                  <form onSubmit={handleStudentSignup} className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        required
+                        placeholder="e.g. Tanmay Sharma"
+                        className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={studentEmail}
+                          onChange={(e) => setStudentEmail(e.target.value)}
+                          required
+                          placeholder="e.g. tanmay@gmail.com"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Password (min 6 chars)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={studentPassword}
+                            onChange={(e) => setStudentPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            placeholder="Create password"
+                            className="w-full text-xs font-medium pl-3.5 pr-8 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600"
+                          >
+                            {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Current Class / Year
+                        </label>
+                        <select
+                          value={studentClass}
+                          onChange={(e) => setStudentClass(e.target.value)}
+                          className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        >
+                          <option value="Class 11">Class 11 (High School)</option>
+                          <option value="Class 12">Class 12 (Board / Entrance)</option>
+                          <option value="Dropper / Gap Year">Dropper / Gap Year</option>
+                          <option value="College 1st Year">College 1st Year</option>
+                          <option value="College 2nd Year+">College 2nd Year+</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          School / College Name
+                        </label>
+                        <input
+                          type="text"
+                          value={studentCollege}
+                          onChange={(e) => setStudentCollege(e.target.value)}
+                          placeholder="e.g. DPS / St. Xavier's"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Stream Selection */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Select Your Academic Stream:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {STREAMS_LIST.map((st) => (
+                          <button
+                            type="button"
+                            key={st.id}
+                            onClick={() => setStudentStream(st.id)}
+                            className={`p-2.5 rounded-2xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                              studentStream === st.id
+                                ? 'bg-[#FFF1F3] border-brand-rose text-brand-maroon shadow-xs ring-1 ring-brand-rose'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="text-base">{st.icon}</span>
+                            <div className="truncate">
+                              <p className="leading-tight truncate">{st.shortName}</p>
+                              <p className="text-[9px] font-normal text-slate-500 truncate">{st.subjects[0]}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Every new student receives <strong>1 Free Trial Session</strong> (₹0) automatically!</span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <span>{isLoading ? 'Creating account...' : 'Create Account & Start Learning'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    <div className="pt-2 text-center text-xs text-slate-500">
+                      Already registered?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('login');
+                          setErrorMessage('');
+                        }}
+                        className="font-bold text-brand-maroon hover:underline cursor-pointer"
+                      >
+                        Log in here
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+
+            {/* ==================== MENTOR FORMS ==================== */}
+            {modalRole === 'mentor' && (
+              <>
+                {/* 1. Mentor Log In */}
+                {authTab === 'login' && (
+                  <form onSubmit={handleMentorLogin} className="space-y-4">
+                    <div className="px-3.5 py-2.5 rounded-2xl bg-rose-50/80 border border-rose-200 text-[11px] text-brand-maroon">
+                      <div className="flex items-center gap-1.5 font-bold mb-0.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-brand-rose" />
+                        <span>Institutional Verification Enforced</span>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed">
+                        Mentor accounts require an official college domain email (e.g. @nitk.edu.in, @iiserkol.ac.in, @iitb.ac.in).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Verified College Email
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <input
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          required
+                          placeholder="e.g. yourname.batch@nitk.edu.in"
+                          className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700">Password</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForgotEmail(loginEmail);
+                            setShowForgotPassword(true);
+                          }}
+                          className="text-[11px] font-bold text-brand-rose hover:underline cursor-pointer"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          required
+                          placeholder="Enter mentor account password"
+                          className="w-full text-xs font-medium pl-10 pr-10 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Real Mentors Selector Pills */}
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Quick Fill: 5 Real Institutional Mentors
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { name: 'Akash (NITK)', email: 'akashpatel.261ec105@nitk.edu.in' },
+                          { name: 'Bhanu (IISER-K)', email: 'bkp26ms173@iiserkol.ac.in' },
+                          { name: 'Soham (NITK)', email: 'sohampurohit.261cv146@nitk.edu.in' },
+                          { name: 'Vineeth (NITK)', email: 'knvineethrao.261cv119@nitk.edu.in' },
+                          { name: 'Mausmi (NITK)', email: 'mausmi.261ec135@nitk.edu.in' }
+                        ].map((m) => (
+                          <button
+                            key={m.email}
+                            type="button"
+                            onClick={() => {
+                              setLoginEmail(m.email);
+                              setLoginPassword('MentorPass@2026');
+                            }}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
+                              loginEmail === m.email
+                                ? 'bg-brand-rose text-white border-brand-rose'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {m.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={staySignedIn}
+                          onChange={(e) => setStaySignedIn(e.target.checked)}
+                          className="rounded text-brand-rose focus:ring-brand-rose"
+                        />
+                        <span>Stay signed in</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
+                    >
+                      <span>{isLoading ? 'Verifying & signing in...' : 'Enter Senior Mentor Workspace'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    <div className="pt-3 border-t border-rose-100 flex items-center justify-between text-xs text-slate-500">
+                      <span>New verified senior?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('signup');
+                          setErrorMessage('');
+                        }}
+                        className="font-bold text-brand-maroon hover:underline cursor-pointer"
+                      >
+                        Register college email →
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* 2. Mentor Sign Up */}
+                {authTab === 'signup' && (
+                  <form onSubmit={handleMentorSignup} className="space-y-3.5">
+                    <div className="px-3.5 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                      <strong>Requirement:</strong> Mentors must register using an official institutional college email domain (e.g. @nitk.edu.in, @iiserkol.ac.in, @iitb.ac.in).
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={mentorName}
+                        onChange={(e) => setMentorName(e.target.value)}
+                        required
+                        placeholder="e.g. Siddharth Rao"
+                        className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Verified College Email
+                        </label>
+                        <input
+                          type="email"
+                          value={mentorEmail}
+                          onChange={(e) => setMentorEmail(e.target.value)}
+                          required
+                          placeholder="e.g. srao.261cs@nitk.edu.in"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Password (min 6 chars)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={mentorPassword}
+                            onChange={(e) => setMentorPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            placeholder="Create password"
+                            className="w-full text-xs font-medium pl-3.5 pr-8 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600"
+                          >
+                            {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          College / Institute
+                        </label>
+                        <input
+                          type="text"
+                          value={mentorCollege}
+                          onChange={(e) => setMentorCollege(e.target.value)}
+                          required
+                          placeholder="e.g. NITK Surathkal / IISER Kolkata"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Branch / Department
+                        </label>
+                        <input
+                          type="text"
+                          value={mentorBranch}
+                          onChange={(e) => setMentorBranch(e.target.value)}
+                          required
+                          placeholder="e.g. Computer Science / Physics"
+                          className="w-full text-xs font-medium px-3.5 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Current Year
+                        </label>
+                        <select
+                          value={mentorYear}
+                          onChange={(e) => setMentorYear(e.target.value)}
+                          className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        >
+                          <option value="1st Year (2026 Batch)">1st Year (2026 Batch)</option>
+                          <option value="2nd Year (2025 Batch)">2nd Year (2025 Batch)</option>
+                          <option value="3rd Year (2024 Batch)">3rd Year (2024 Batch)</option>
+                          <option value="Final Year (2023 Batch)">Final Year (2023 Batch)</option>
+                          <option value="Research Scholar / Alumni">Research Scholar / Alumni</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Primary Guidance Stream
+                        </label>
+                        <select
+                          value={mentorStream}
+                          onChange={(e) => setMentorStream(e.target.value)}
+                          className="w-full text-xs font-medium px-3 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
+                        >
+                          <option value={STREAMS.PCM}>Science (PCM)</option>
+                          <option value={STREAMS.PCB}>Science (PCB)</option>
+                          <option value={STREAMS.COMMERCE}>Commerce & Management</option>
+                          <option value={STREAMS.ARTS}>Arts & Humanities</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                    >
+                      <span>{isLoading ? 'Verifying domain...' : 'Register as Senior Mentor'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    <div className="pt-2 text-center text-xs text-slate-500">
+                      Already registered?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab('login');
+                          setErrorMessage('');
+                        }}
+                        className="font-bold text-brand-maroon hover:underline cursor-pointer"
+                      >
+                        Log in here
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+
+            {/* Prototype Security Note */}
+            <div className="mt-5 pt-3 border-t border-rose-100/70 text-center">
+              <p className="text-[10px] text-slate-400">
+                🔒 Secure Authentication • Local prototype mode hashes passwords with salted SHA-256 (Web Crypto API).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
+          <div className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-elevated border border-rose-100">
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 rounded-2xl bg-rose-50 text-brand-rose flex items-center justify-center mb-3">
+              <KeyRound className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900">Reset Password</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Enter the email associated with your account and we will send you a password reset simulation link.
+            </p>
+
+            {forgotStatus.error && (
+              <div className="mt-3 p-2.5 rounded-xl bg-red-50 text-red-700 text-xs">
+                {forgotStatus.error}
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleModalSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {modalRole === 'student' ? 'Student Email' : 'Verified College Email'}
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    required
-                    className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                    placeholder="name@college.edu.in"
-                  />
-                </div>
+            {forgotStatus.msg && (
+              <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs">
+                {forgotStatus.msg}
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    required
-                    className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-rose-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose shadow-2xs"
-                    placeholder="Enter any password for prototype"
-                  />
-                </div>
-              </div>
-
-              {modalRole === 'mentor' && (
-                <div className="px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 text-[11px] text-brand-maroon">
-                  <strong>Verification Note:</strong> Mentors sign in with official institutional email domain.
-                </div>
-              )}
+            <form onSubmit={handleForgotPasswordSubmit} className="mt-4 space-y-3">
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                required
+                placeholder="your.email@domain.com"
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-rose"
+              />
 
               <button
                 type="submit"
-                className="clay-btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer mt-2"
+                disabled={forgotStatus.loading}
+                className="clay-btn-primary w-full py-2.5 text-xs font-bold cursor-pointer disabled:opacity-50"
               >
-                <span>
-                  {modalRole === 'student'
-                    ? `Enter Student Dashboard (${chosenStream.includes('PCM') ? 'PCM' : chosenStream.includes('PCB') ? 'PCB' : chosenStream})`
-                    : 'Enter Mentor Workspace'}
-                </span>
-                <ArrowRight className="w-4 h-4" />
+                {forgotStatus.loading ? 'Sending link...' : 'Send Password Reset Link'}
               </button>
             </form>
-
-            <p className="text-[10px] text-center text-slate-400 mt-4">
-              Prototype Note: Any input is accepted. Click submit to enter instantly.
-            </p>
           </div>
         </div>
       )}

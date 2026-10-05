@@ -71,12 +71,12 @@ export const StudentDashboard = () => {
   // Stats
   const completedSessions = sessions.filter(s => s.status === 'completed').length;
   const upcomingSessions = sessions.filter(s => s.status === 'upcoming');
-  const streakCount = streakData.currentStreak || 5;
+  const streakCount = streakData?.currentStreak ?? 0;
   const notesCount = studentNotes.length;
   const quizzesCount = quizResults.length;
   const averageQuizScore = quizzesCount > 0
-    ? Math.round(quizResults.reduce((acc, q) => acc + (q.percentage || 75), 0) / quizzesCount)
-    : 85;
+    ? Math.round(quizResults.reduce((acc, q) => acc + (q.percentage || 0), 0) / quizzesCount)
+    : 0;
 
   // Filtered mentors by stream
   const streamMentors = mentors.filter(m => m.stream === selectedStream || m.guidesStreams?.includes(selectedStream));

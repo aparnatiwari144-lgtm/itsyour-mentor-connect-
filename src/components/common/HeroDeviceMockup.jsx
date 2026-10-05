@@ -76,10 +76,10 @@ export const HeroDeviceMockup = () => {
           <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-rose-100">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-[9px] flex items-center justify-center shadow-xs">
-                AT
+                ST
               </div>
               <div>
-                <p className="font-bold text-xs leading-none text-slate-900">Good Morning, Aparna!</p>
+                <p className="font-bold text-xs leading-none text-slate-900">Good Morning, Mentee!</p>
                 <p className="text-[9px] text-brand-rose font-medium mt-0.5">Stream: Science (PCM)</p>
               </div>
             </div>

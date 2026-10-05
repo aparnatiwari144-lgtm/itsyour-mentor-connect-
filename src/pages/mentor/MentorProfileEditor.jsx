@@ -22,8 +22,19 @@ export const MentorProfileEditor = () => {
   const [guidesStreamsString, setGuidesStreamsString] = useState(
     currentMentor.guidesStreams ? currentMentor.guidesStreams.join(', ') : currentMentor.stream
   );
-  const [expertiseString, setExpertiseString] = useState(currentMentor.expertise.join(', '));
-  const [languagesString, setLanguagesString] = useState(currentMentor.languages.join(', '));
+  const [expertiseString, setExpertiseString] = useState(currentMentor.expertise ? currentMentor.expertise.join(', ') : '');
+  const [languagesString, setLanguagesString] = useState(currentMentor.languages ? currentMentor.languages.join(', ') : 'English, Hindi');
+
+  React.useEffect(() => {
+    setName(currentMentor.name || '');
+    setBio(currentMentor.bio || '');
+    setStream(currentMentor.stream || 'Science (PCM)');
+    setGuidesStreamsString(
+      currentMentor.guidesStreams ? currentMentor.guidesStreams.join(', ') : currentMentor.stream || 'Science (PCM)'
+    );
+    setExpertiseString(currentMentor.expertise ? currentMentor.expertise.join(', ') : '');
+    setLanguagesString(currentMentor.languages ? currentMentor.languages.join(', ') : 'English, Hindi');
+  }, [currentMentor]);
 
   const handleSave = (e) => {
     e.preventDefault();
