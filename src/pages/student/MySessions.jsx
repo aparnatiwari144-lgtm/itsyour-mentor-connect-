@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   Video,
-  Star,
   MessageSquare,
   AlertCircle,
   CheckCircle2,
@@ -13,16 +12,16 @@ import {
   RotateCcw,
   Sparkles,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from 'lucide-react';
 
 export const MySessions = () => {
   const navigate = useNavigate();
   const { sessions, cancelSession, completeSession, submitSessionReview } = useApp();
 
-  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'completed' | 'cancelled'
+  const [activeTab, setActiveTab] = useState('upcoming');
   const [reviewingSession, setReviewingSession] = useState(null);
-  const [selectedRating, setSelectedRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [cancelingSessionId, setCancelingSessionId] = useState(null);
   const [cancelReason, setCancelReason] = useState('Schedule conflict with semester exam');
@@ -37,14 +36,13 @@ export const MySessions = () => {
 
   const handleOpenReviewModal = (session) => {
     setReviewingSession(session);
-    setSelectedRating(session.rating || 5);
     setReviewText(session.review || '');
   };
 
   const handleSaveReview = (e) => {
     e.preventDefault();
     if (!reviewingSession) return;
-    submitSessionReview(reviewingSession.id, selectedRating, reviewText);
+    submitSessionReview(reviewingSession.id, reviewText);
     setReviewingSession(null);
   };
 
@@ -77,7 +75,7 @@ export const MySessions = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-rose-100 shadow-xs max-w-md">
+      <div className="flex items-center gap-2 p-1.5 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 shadow-xs max-w-md">
         <button
           onClick={() => setActiveTab('upcoming')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
@@ -112,7 +110,7 @@ export const MySessions = () => {
 
       {/* Session Cards List */}
       {filteredSessions.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-rose-100 shadow-soft">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 text-center border border-white/80 shadow-soft">
           <Calendar className="w-10 h-10 text-rose-300 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-800">
             No {activeTab} sessions found
@@ -136,7 +134,7 @@ export const MySessions = () => {
           {filteredSessions.map((session) => (
             <div
               key={session.id}
-              className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft hover:shadow-card transition-all"
+              className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft hover:shadow-card transition-all"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 {/* Left: Mentor Details & Topic */}
@@ -156,6 +154,11 @@ export const MySessions = () => {
                       <span className="text-[10px] font-semibold text-slate-500">
                         {session.sessionType}
                       </span>
+                      {session.isTrialSession && (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Free Trial Session
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs font-semibold text-slate-800 mt-1">
@@ -198,7 +201,7 @@ export const MySessions = () => {
                     <button
                       onClick={() => completeSession(session.id)}
                       className="px-3.5 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition-colors"
-                      title="Mark as completed to leave rating and test review flow"
+                      title="Mark as completed to leave feedback and test review flow"
                     >
                       Mark Completed (Demo)
                     </button>
@@ -209,8 +212,8 @@ export const MySessions = () => {
                       onClick={() => handleOpenReviewModal(session)}
                       className="px-4 py-2 rounded-full bg-brand-roseLight hover:bg-rose-100 text-brand-maroon text-xs font-bold border border-rose-200 transition-colors flex items-center gap-1.5"
                     >
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      {session.rating ? 'Update Rating & Feedback' : 'Leave Rating & Review'}
+                      <FileText className="w-3.5 h-3.5 text-brand-rose" />
+                      {session.review ? 'Update Feedback Note' : 'Leave Feedback'}
                     </button>
                   )}
 
@@ -240,18 +243,11 @@ export const MySessions = () => {
                   </div>
                 )}
 
-                {/* Completed review preview if already rated */}
-                {session.status === 'completed' && session.rating && (
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <div className="flex items-center text-amber-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3.5 h-3.5 ${i < session.rating ? 'fill-current' : 'text-slate-200'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="italic text-[11px] truncate max-w-xs">"{session.review}"</span>
+                {/* Completed review preview if already written (No stars) */}
+                {session.status === 'completed' && session.review && (
+                  <div className="flex items-center gap-2 text-xs text-slate-600 max-w-sm">
+                    <span className="font-semibold text-slate-700">Feedback:</span>
+                    <span className="italic text-[11px] truncate">"{session.review}"</span>
                   </div>
                 )}
 
@@ -266,13 +262,13 @@ export const MySessions = () => {
         </div>
       )}
 
-      {/* Review & Feedback Modal */}
+      {/* Written Feedback Modal (No star ratings) */}
       {reviewingSession && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-card border border-rose-100 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-rose-50">
               <h3 className="font-bold text-base text-slate-900">
-                Rate Session with {reviewingSession.mentorName}
+                Session Feedback for {reviewingSession.mentorName}
               </h3>
               <button
                 onClick={() => setReviewingSession(null)}
@@ -284,36 +280,12 @@ export const MySessions = () => {
 
             <form onSubmit={handleSaveReview} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                  Your Overall Rating
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      type="button"
-                      key={star}
-                      onClick={() => setSelectedRating(star)}
-                      className="p-1 hover:scale-110 transition-transform"
-                    >
-                      <Star
-                        className={`w-7 h-7 ${
-                          star <= selectedRating
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-slate-200'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <span className="ml-2 font-bold text-sm text-slate-800">
-                    {selectedRating} / 5 Stars
-                  </span>
-                </div>
-              </div>
-
-              <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Write Your Honest Feedback
+                  Write Your Honest Mentee Feedback
                 </label>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Share how this session helped your clarity, branch choice, or exam roadmap. Qualitative comments help seniors and future mentees.
+                </p>
                 <textarea
                   rows={4}
                   required
@@ -336,7 +308,7 @@ export const MySessions = () => {
                   type="submit"
                   className="px-5 py-2.5 rounded-full bg-brand-rose hover:bg-brand-roseHover text-white text-xs font-bold shadow-soft transition-all"
                 >
-                  Submit Review
+                  Submit Feedback
                 </button>
               </div>
             </form>

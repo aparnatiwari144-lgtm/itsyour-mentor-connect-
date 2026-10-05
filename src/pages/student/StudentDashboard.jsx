@@ -10,18 +10,18 @@ import {
   Video,
   ArrowRight,
   ShieldCheck,
-  Star,
   Clock,
   Sparkles,
   BookOpen,
   CheckSquare,
   ChevronRight,
-  ExternalLink
+  CreditCard,
+  Zap
 } from 'lucide-react';
 
 export const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { studentUser, mentors, sessions, tasks, toggleTask } = useApp();
+  const { studentUser, mentors, sessions, tasks, toggleTask, hasUsedFreeTrial, activePlan } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Stats calculation
@@ -42,8 +42,58 @@ export const StudentDashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Free Trial Banner / Active Plan Notice */}
+      {!hasUsedFreeTrial ? (
+        <div className="bg-gradient-to-r from-amber-500 via-rose-500 to-brand-maroon rounded-3xl p-5 sm:p-6 text-white shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6 text-amber-200" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-100 bg-white/20 px-2.5 py-0.5 rounded-full">
+                Welcome Offer
+              </span>
+              <h2 className="text-base sm:text-lg font-black mt-1">
+                1 Free Trial Session Available!
+              </h2>
+              <p className="text-xs text-rose-100 mt-0.5">
+                Your first 1:1 mentorship call with a verified IIT/NIT/IISER senior is on us.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/student/mentors')}
+            className="px-6 py-2.5 rounded-full bg-white text-brand-maroon hover:bg-rose-50 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 self-start sm:self-auto shrink-0"
+          >
+            Book Free Trial <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-4 sm:p-5 border border-rose-100 flex items-center justify-between gap-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-brand-roseLight text-brand-rose flex items-center justify-center">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900">
+                Mentorship Status: <span className="text-emerald-700">{activePlan}</span>
+              </p>
+              <p className="text-[10px] text-slate-500">Free trial redeemed • Sample pricing - prototype</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/student/billing')}
+            className="text-xs font-bold text-brand-rose hover:text-brand-maroon transition-colors"
+          >
+            Manage Plans →
+          </button>
+        </div>
+      )}
+
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-brand-rose to-brand-maroon rounded-3xl p-6 sm:p-8 text-white shadow-card">
+      <div className="relative overflow-hidden bg-gradient-to-r from-brand-rose via-brand-maroon to-brand-dark rounded-3xl p-6 sm:p-8 text-white shadow-card">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5 text-rose-200" />
@@ -81,12 +131,11 @@ export const StudentDashboard = () => {
 
         {/* Decorative background shapes */}
         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute right-24 top-6 w-32 h-32 bg-rose-400/10 rounded-full blur-xl pointer-events-none" />
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft flex items-center gap-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-brand-roseLight text-brand-rose flex items-center justify-center shrink-0">
             <Calendar className="w-6 h-6" />
           </div>
@@ -96,7 +145,7 @@ export const StudentDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft flex items-center gap-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-6 h-6" />
           </div>
@@ -106,7 +155,7 @@ export const StudentDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft flex items-center gap-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6" />
           </div>
@@ -118,7 +167,7 @@ export const StudentDashboard = () => {
       </div>
 
       {/* Search & Popular Domains */}
-      <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Find a Senior Mentor</h2>
@@ -161,7 +210,7 @@ export const StudentDashboard = () => {
       {/* Up Next & Quick Planner Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Next Scheduled Session */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-rose-100 shadow-soft flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-rose-50 mb-4">
               <div className="flex items-center gap-2">
@@ -177,7 +226,7 @@ export const StudentDashboard = () => {
             </div>
 
             {nextSession ? (
-              <div className="bg-brand-blush/50 rounded-2xl p-5 border border-rose-100/80 space-y-4">
+              <div className="bg-brand-blush/40 rounded-2xl p-5 border border-rose-100/80 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-bold text-sm flex items-center justify-center shadow-sm">
@@ -229,7 +278,7 @@ export const StudentDashboard = () => {
                     onClick={() => navigate('/student/mentors')}
                     className="text-xs font-bold text-brand-rose underline"
                   >
-                    Browse seniors to book your first slot →
+                    Browse seniors to book your session →
                   </button>
                 </div>
               </div>
@@ -243,7 +292,7 @@ export const StudentDashboard = () => {
         </div>
 
         {/* Study Planner Snippet */}
-        <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft flex flex-col justify-between">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-rose-50 mb-3">
               <div className="flex items-center gap-2">
@@ -295,7 +344,7 @@ export const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Verified Seniors Showcase */}
+      {/* Verified Seniors Showcase (No Stars / No Numbers) */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -306,7 +355,7 @@ export const StudentDashboard = () => {
           </div>
           <button
             onClick={() => navigate('/student/mentors')}
-            className="text-xs font-bold text-brand-rose hover:text-brand-maroon flex items-center gap-1"
+            className="text-xs font-bold text-brand-maroon hover:text-brand-rose flex items-center gap-1"
           >
             See all 5 verified mentors <ChevronRight className="w-4 h-4" />
           </button>
@@ -316,7 +365,7 @@ export const StudentDashboard = () => {
           {mentors.slice(0, 3).map((mentor) => (
             <div
               key={mentor.id}
-              className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft hover:shadow-card transition-all flex flex-col justify-between"
+              className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft hover:shadow-card transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -356,17 +405,16 @@ export const StudentDashboard = () => {
               </div>
 
               <div className="pt-3 border-t border-rose-50 flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-500">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span>{mentor.rating}</span>
-                </div>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  {mentor.sessionsCompleted}+ sessions done
+                </span>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigate(`/student/mentors/${mentor.id}`)}
                     className="text-xs font-semibold text-slate-600 hover:text-brand-rose px-2 py-1"
                   >
-                    View
+                    Profile
                   </button>
                   <button
                     onClick={() => navigate(`/student/book/${mentor.id}`)}

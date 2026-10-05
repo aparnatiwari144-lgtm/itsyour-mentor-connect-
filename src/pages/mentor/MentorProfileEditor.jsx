@@ -139,9 +139,9 @@ export const MentorProfileEditor = () => {
 
           <div className="flex items-center justify-between p-4 rounded-2xl bg-brand-blush/40 border border-rose-100">
             <div>
-              <p className="font-bold text-sm text-slate-900">Offer 100% Free Mentorship</p>
+              <p className="font-bold text-sm text-slate-900">Participate in Free Trial Program</p>
               <p className="text-xs text-slate-600 mt-0.5">
-                Recommend keeping sessions free for students to ensure accessible guidance for under-resourced applicants.
+                Welcome new students for 1 complimentary trial session before transitioning to sample mentorship plans (Sample pricing - prototype).
               </p>
             </div>
 

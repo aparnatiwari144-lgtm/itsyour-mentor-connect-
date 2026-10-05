@@ -17,7 +17,7 @@ export const INITIAL_SESSIONS = [
     sessionType: "1:1 Video Mentorship",
     status: "upcoming", // upcoming, completed, cancelled, pending
     roomCode: "iyapp-science-4982",
-    rating: null,
+    isTrialSession: true,
     review: null
   },
   {
@@ -38,7 +38,7 @@ export const INITIAL_SESSIONS = [
     sessionType: "1:1 Video Mentorship",
     status: "upcoming",
     roomCode: "iyapp-women-stem-102",
-    rating: null,
+    isTrialSession: false,
     review: null
   },
   {
@@ -59,7 +59,7 @@ export const INITIAL_SESSIONS = [
     sessionType: "1:1 Video Mentorship",
     status: "completed",
     roomCode: "iyapp-review-8821",
-    rating: 5,
+    isTrialSession: true,
     review: "Akash gave realistic, actionable advice. His self-assessment framework made me realize what truly drives my interest in computing!"
   },
   {
@@ -80,7 +80,7 @@ export const INITIAL_SESSIONS = [
     sessionType: "1:1 Video Mentorship",
     status: "pending", // pending request for mentor to accept/decline
     roomCode: "iyapp-iat-pending-99",
-    rating: null,
+    isTrialSession: true,
     review: null
   },
   {
@@ -101,7 +101,7 @@ export const INITIAL_SESSIONS = [
     sessionType: "1:1 Video Mentorship",
     status: "pending",
     roomCode: "iyapp-counsel-33",
-    rating: null,
+    isTrialSession: false,
     review: null
   }
 ];
@@ -327,25 +327,24 @@ export const INITIAL_NOTIFICATIONS = [
 
 export const MENTOR_ANALYTICS = {
   monthlySessions: [
-    { month: "Jun", sessions: 6, hours: 5.5 },
-    { month: "Jul", sessions: 11, hours: 10.0 },
-    { month: "Aug", sessions: 18, hours: 16.5 },
-    { month: "Sep", sessions: 24, hours: 22.0 },
-    { month: "Oct", sessions: 12, hours: 11.5 }
-  ],
-  ratingDistribution: [
-    { stars: "5 Stars", percentage: 88, count: 41 },
-    { stars: "4 Stars", percentage: 10, count: 5 },
-    { stars: "3 Stars", percentage: 2, count: 1 },
-    { stars: "2 Stars", percentage: 0, count: 0 },
-    { stars: "1 Star", percentage: 0, count: 0 }
+    { month: "Jun", sessions: 6, hours: 5.5, earnings: 2100 },
+    { month: "Jul", sessions: 11, hours: 10.0, earnings: 3850 },
+    { month: "Aug", sessions: 18, hours: 16.5, earnings: 6300 },
+    { month: "Sep", sessions: 24, hours: 22.0, earnings: 8400 },
+    { month: "Oct", sessions: 12, hours: 11.5, earnings: 4200 }
   ],
   topicDistribution: [
     { name: "Exam Strategy", value: 38 },
     { name: "Pure Science/Research", value: 27 },
     { name: "Parental Pressure & Self Assessment", value: 20 },
     { name: "Branch Selection", value: 15 }
-  ]
+  ],
+  earningsOverview: {
+    totalEarned: "₹14,200",
+    thisMonth: "₹4,200",
+    hoursMentored: "46.5 hrs",
+    pricingModel: "Sample pricing - prototype"
+  }
 };
 
 export const STUDENT_PROGRESS_STATS = {
@@ -360,12 +359,53 @@ export const STUDENT_PROGRESS_STATS = {
     { month: "Month 1", score: 55 },
     { month: "Month 2", score: 78 },
     { month: "Current", score: 92 }
-  ],
-  domainBreakdown: [
-    { subject: "Self-Assessment", score: 90 },
-    { subject: "Web Dev Roadmap", score: 85 },
-    { subject: "Exam Clarity", score: 92 },
-    { subject: "College Life", score: 88 },
-    { subject: "Career Options", score: 95 }
   ]
 };
+
+export const SAMPLE_PRICING_PLANS = [
+  {
+    id: "plan-single",
+    name: "Single Session",
+    price: "₹399",
+    billingPeriod: "per session",
+    tag: "Flexible",
+    description: "One 45-minute 1:1 video consultation with your chosen verified senior.",
+    features: [
+      "45-minute 1:1 video call",
+      "Screen sharing & interactive notes",
+      "Written follow-up summary",
+      "Access to shared session resources"
+    ]
+  },
+  {
+    id: "plan-starter",
+    name: "Starter Pack",
+    price: "₹999",
+    billingPeriod: "3 sessions (Save 17%)",
+    tag: "Most Popular",
+    popular: true,
+    description: "Ideal for comprehensive counselling and ongoing semester guidance.",
+    features: [
+      "3 × 45-minute 1:1 video calls",
+      "Priority slot booking",
+      "Direct chat access with senior",
+      "JoSAA/Exam custom roadmap review",
+      "Unlimited PDF guide downloads"
+    ]
+  },
+  {
+    id: "plan-monthly",
+    name: "Monthly Cohort",
+    price: "₹1,999",
+    billingPeriod: "per month",
+    tag: "Dedicated Mentorship",
+    description: "Continuous senior backing throughout your exam or college semester.",
+    features: [
+      "Weekly 1:1 video check-ins",
+      "Unlimited asynchronous messaging",
+      "Parent consultation session option",
+      "Curated research/placement review",
+      "Dedicated senior follow-up notes"
+    ]
+  }
+];

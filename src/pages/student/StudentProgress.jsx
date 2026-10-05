@@ -10,27 +10,22 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
+  CartesianGrid
 } from 'recharts';
 import {
   TrendingUp,
-  Star,
   Target,
   Award,
   Sparkles,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  FileText
 } from 'lucide-react';
 
 export const StudentProgress = () => {
   const { studentUser, sessions } = useApp();
 
-  const ratedSessions = sessions.filter((s) => s.rating);
+  const sessionsWithFeedback = sessions.filter((s) => s.review);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-300">
@@ -40,13 +35,13 @@ export const StudentProgress = () => {
           Feedback & Growth Analytics
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          Tracking your clarity progression, self-assessment confidence, and mentor ratings.
+          Tracking your clarity progression, self-assessment confidence, and qualitative session notes.
         </p>
       </div>
 
       {/* Hero Stat Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Self-Assessment Score
           </span>
@@ -56,17 +51,17 @@ export const StudentProgress = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Feedback Submitted
           </span>
-          <p className="text-3xl font-black text-slate-900 mt-1">{ratedSessions.length}</p>
+          <p className="text-3xl font-black text-slate-900 mt-1">{sessionsWithFeedback.length}</p>
           <p className="text-xs text-slate-500 mt-1">
-            Average given rating: 5.0 ★
+            Qualitative session notes
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Milestones Completed
           </span>
@@ -82,7 +77,7 @@ export const StudentProgress = () => {
       {/* Recharts Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Clarity Growth Chart (Overcoming parental pressure & self-doubt) */}
-        <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
           <div>
             <h3 className="font-bold text-base text-slate-900">
               Clarity & Self-Assessment Growth
@@ -122,7 +117,7 @@ export const StudentProgress = () => {
         </div>
 
         {/* Monthly Mentorship Sessions Chart */}
-        <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
           <div>
             <h3 className="font-bold text-base text-slate-900">
               Monthly Mentorship Sessions
@@ -149,37 +144,34 @@ export const StudentProgress = () => {
         </div>
       </div>
 
-      {/* Ratings & Feedback Given */}
-      <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+      {/* Written Feedback Given (No star numbers) */}
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
         <h3 className="font-bold text-base text-slate-900">
-          Reviews & Feedback Given to Mentors
+          Written Feedback Given to Mentors
         </h3>
 
-        {ratedSessions.length === 0 ? (
+        {sessionsWithFeedback.length === 0 ? (
           <p className="text-xs text-slate-500 py-4">
-            No feedback submitted yet. Complete an upcoming session to rate your senior!
+            No feedback submitted yet. Complete an upcoming session to submit guidance notes!
           </p>
         ) : (
           <div className="space-y-3">
-            {ratedSessions.map((session) => (
+            {sessionsWithFeedback.map((session) => (
               <div
                 key={session.id}
-                className="bg-slate-50/80 rounded-2xl p-4 border border-rose-100/60"
+                className="bg-brand-blush/30 rounded-2xl p-4 border border-rose-100/70 space-y-1.5"
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-900">
-                      Session with {session.mentorName} ({session.mentorCollege})
-                    </h4>
-                    <p className="text-[11px] text-slate-500">{session.topic}</p>
-                  </div>
-                  <div className="flex items-center text-amber-500 gap-1 text-xs font-bold">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    <span>{session.rating} / 5</span>
-                  </div>
+                  <h4 className="font-bold text-xs text-slate-900">
+                    Session with {session.mentorName} ({session.mentorCollege})
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Domain Verified Note
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-500">Topic: {session.topic}</p>
 
-                <p className="text-xs text-slate-600 mt-2 italic bg-white p-3 rounded-xl border border-rose-50">
+                <p className="text-xs text-slate-700 mt-2 italic bg-white/90 p-3 rounded-xl border border-rose-50">
                   "{session.review}"
                 </p>
               </div>

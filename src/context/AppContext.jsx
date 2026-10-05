@@ -6,7 +6,8 @@ import {
   INITIAL_STUDENT_TASKS,
   INITIAL_MESSAGES,
   INITIAL_MENTOR_STUDENTS,
-  INITIAL_NOTIFICATIONS
+  INITIAL_NOTIFICATIONS,
+  SAMPLE_PRICING_PLANS
 } from '../data/mockData';
 
 const AppContext = createContext(null);
@@ -20,6 +21,15 @@ export const AppProvider = ({ children }) => {
   const [studentUser, setStudentUser] = useState(() => {
     const saved = localStorage.getItem('iyapp_student');
     return saved ? JSON.parse(saved) : DEMO_STUDENT;
+  });
+
+  // Free Trial status for student (1 free trial session)
+  const [hasUsedFreeTrial, setHasUsedFreeTrial] = useState(() => {
+    return localStorage.getItem('iyapp_trial_used') === 'true';
+  });
+
+  const [activePlan, setActivePlan] = useState(() => {
+    return localStorage.getItem('iyapp_student_plan') || 'Free Trial';
   });
 
   // Mentors state (allows updating mentor profiles and slots)
@@ -83,6 +93,14 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('iyapp_student', JSON.stringify(studentUser));
   }, [studentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_trial_used', hasUsedFreeTrial ? 'true' : 'false');
+  }, [hasUsedFreeTrial]);
+
+  useEffect(() => {
+    localStorage.setItem('iyapp_student_plan', activePlan);
+  }, [activePlan]);
 
   useEffect(() => {
     localStorage.setItem('iyapp_mentors', JSON.stringify(mentors));
@@ -153,9 +171,34 @@ export const AppProvider = ({ children }) => {
     addToast('Logged out successfully', 'info');
   };
 
+  // Free trial handlers
+  const markTrialAsUsed = () => {
+    setHasUsedFreeTrial(true);
+    setActivePlan('Starter Pack (Active)');
+  };
+
+  const selectPricingPlan = (planName) => {
+    setActivePlan(planName);
+    addToast(`Subscribed to ${planName} (Sample pricing - prototype)`, 'success');
+  };
+
   // Session Actions
-  const bookSession = ({ mentorId, date, time, topic, doubtNotes, sessionType = '1:1 Video Mentorship' }) => {
+  const bookSession = ({
+    mentorId,
+    date,
+    time,
+    topic,
+    doubtNotes,
+    sessionType = '1:1 Video Mentorship',
+    isTrial = false,
+    planSelected = null
+  }) => {
     const mentor = mentors.find(m => m.id === mentorId);
+
+    if (isTrial) {
+      markTrialAsUsed();
+    }
+
     const newSession = {
       id: `sess-${Date.now()}`,
       mentorId,
@@ -174,7 +217,8 @@ export const AppProvider = ({ children }) => {
       sessionType,
       status: 'upcoming',
       roomCode: `iyapp-${Math.floor(1000 + Math.random() * 9000)}`,
-      rating: null,
+      isTrialSession: isTrial,
+      plan: isTrial ? 'Free Trial' : (planSelected || 'Single Session'),
       review: null
     };
 
@@ -183,8 +227,8 @@ export const AppProvider = ({ children }) => {
     // Also notify
     const newNotif = {
       id: `notif-${Date.now()}`,
-      title: 'Session Booked Successfully!',
-      description: `Your ${sessionType} with ${newSession.mentorName} is scheduled for ${date} at ${time}.`,
+      title: isTrial ? 'Free Trial Session Scheduled!' : 'Mentorship Session Confirmed!',
+      description: `Your session with ${newSession.mentorName} is scheduled for ${date} at ${time}.`,
       timestamp: 'Just now',
       read: false,
       type: 'booking',
@@ -212,13 +256,14 @@ export const AppProvider = ({ children }) => {
       }
       return s;
     }));
-    addToast('Session marked as completed! You can now leave a review.', 'success');
+    addToast('Session marked as completed! You can now leave feedback.', 'success');
   };
 
-  const submitSessionReview = (sessionId, rating, reviewText) => {
+  // Submit written feedback (No ratings / No stars)
+  const submitSessionReview = (sessionId, reviewText) => {
     setSessions(prev => prev.map(s => {
       if (s.id === sessionId) {
-        return { ...s, rating, review: reviewText, status: 'completed' };
+        return { ...s, review: reviewText, status: 'completed' };
       }
       return s;
     }));
@@ -233,7 +278,6 @@ export const AppProvider = ({ children }) => {
               id: `rev-${Date.now()}`,
               studentName: studentUser.name,
               college: studentUser.collegeShort,
-              rating,
               date: 'Just now',
               comment: reviewText
             },
@@ -249,7 +293,7 @@ export const AppProvider = ({ children }) => {
       }));
     }
 
-    addToast('Thank you! Your rating and feedback were submitted.', 'success');
+    addToast('Thank you! Your feedback has been submitted.', 'success');
   };
 
   // Mentor Request Actions
@@ -423,6 +467,8 @@ export const AppProvider = ({ children }) => {
     setMessages(INITIAL_MESSAGES);
     setMentorStudents(INITIAL_MENTOR_STUDENTS);
     setNotifications(INITIAL_NOTIFICATIONS);
+    setHasUsedFreeTrial(false);
+    setActivePlan('Free Trial');
     setRole('student');
     addToast('Prototype data reset to initial pitch-deck state', 'info');
   };
@@ -436,6 +482,10 @@ export const AppProvider = ({ children }) => {
         setRole,
         studentUser,
         updateStudentProfile,
+        hasUsedFreeTrial,
+        markTrialAsUsed,
+        activePlan,
+        selectPricingPlan,
         mentors,
         activeMentorId,
         currentMentor,

@@ -11,7 +11,7 @@ export const AppLayout = ({ requiredRole }) => {
 
   // Protected route check
   if (!role) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (requiredRole && role !== requiredRole) {
@@ -19,7 +19,7 @@ export const AppLayout = ({ requiredRole }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBE9EA] text-slate-800 flex">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#FFF7F8] to-[#FDE8EA] text-slate-800 flex">
       <ToastContainer />
 
       {/* Sidebar */}

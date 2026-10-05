@@ -6,7 +6,6 @@ import {
   Search,
   Filter,
   ShieldCheck,
-  Star,
   Calendar,
   Sparkles,
   ArrowRight,
@@ -28,10 +27,9 @@ export const FindMentors = () => {
   const [selectedCollege, setSelectedCollege] = useState('All');
   const [selectedBranch, setSelectedBranch] = useState('All');
   const [selectedDomain, setSelectedDomain] = useState(initialDomain);
-  const [minRating, setMinRating] = useState('All');
   const [availabilityFilter, setAvailabilityFilter] = useState('All');
 
-  // Filtered mentors list
+  // Filtered mentors list (no rating filtering)
   const filteredMentors = useMemo(() => {
     return mentors.filter((m) => {
       // Search query (name, college, branch, expertise)
@@ -61,10 +59,6 @@ export const FindMentors = () => {
         m.domains.includes(selectedDomain) ||
         m.expertise.some((e) => e.toLowerCase().includes(selectedDomain.toLowerCase()));
 
-      // Rating filter
-      const matchesRating =
-        minRating === 'All' || m.rating >= parseFloat(minRating);
-
       // Availability filter
       const matchesAvailability =
         availabilityFilter === 'All' ||
@@ -76,18 +70,16 @@ export const FindMentors = () => {
         matchesCollege &&
         matchesBranch &&
         matchesDomain &&
-        matchesRating &&
         matchesAvailability
       );
     });
-  }, [mentors, searchQuery, selectedCollege, selectedBranch, selectedDomain, minRating, availabilityFilter]);
+  }, [mentors, searchQuery, selectedCollege, selectedBranch, selectedDomain, availabilityFilter]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCollege('All');
     setSelectedBranch('All');
     setSelectedDomain('All Domains');
-    setMinRating('All');
     setAvailabilityFilter('All');
   };
 
@@ -108,7 +100,7 @@ export const FindMentors = () => {
       </div>
 
       {/* Filter and Search Bar Card */}
-      <div className="bg-white rounded-3xl p-5 border border-rose-100 shadow-soft space-y-4">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/80 shadow-soft space-y-4">
         {/* Top search input */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -117,12 +109,12 @@ export const FindMentors = () => {
             placeholder="Search by mentor name, institute, branch, or specific topic..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-rose-200 focus:outline-hidden focus:ring-2 focus:ring-brand-rose/20 focus:border-brand-rose text-xs sm:text-sm"
+            className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-rose-200 focus:outline-hidden focus:ring-2 focus:ring-brand-rose/20 focus:border-brand-rose text-xs sm:text-sm bg-white"
           />
         </div>
 
         {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
               Institution
@@ -156,21 +148,6 @@ export const FindMentors = () => {
 
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Min Rating
-            </label>
-            <select
-              value={minRating}
-              onChange={(e) => setMinRating(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-rose-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-hidden"
-            >
-              <option value="All">Any Rating</option>
-              <option value="4.8">4.8 & Above</option>
-              <option value="4.9">4.9 & Above</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
               Availability
             </label>
             <select
@@ -191,7 +168,7 @@ export const FindMentors = () => {
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Filter by Domain:
             </span>
-            {(searchQuery || selectedCollege !== 'All' || selectedBranch !== 'All' || selectedDomain !== 'All Domains' || minRating !== 'All' || availabilityFilter !== 'All') && (
+            {(searchQuery || selectedCollege !== 'All' || selectedBranch !== 'All' || selectedDomain !== 'All Domains' || availabilityFilter !== 'All') && (
               <button
                 onClick={resetFilters}
                 className="text-xs text-brand-rose hover:underline font-medium flex items-center gap-1"
@@ -223,14 +200,14 @@ export const FindMentors = () => {
         <span>
           Showing <strong className="text-slate-900">{filteredMentors.length}</strong> verified senior mentor{filteredMentors.length === 1 ? '' : 's'}
         </span>
-        <span className="text-[11px] font-medium text-brand-maroon">
-          All 5 mentors offer free community sessions
+        <span className="text-[11px] font-semibold text-brand-rose">
+          Free trial eligible • Sample pricing thereafter
         </span>
       </div>
 
       {/* Mentors Grid */}
       {filteredMentors.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-rose-100 shadow-soft">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 text-center border border-white/80 shadow-soft">
           <div className="w-12 h-12 rounded-2xl bg-rose-100 text-brand-rose flex items-center justify-center mx-auto mb-3">
             <Search className="w-6 h-6" />
           </div>
@@ -250,7 +227,7 @@ export const FindMentors = () => {
           {filteredMentors.map((mentor) => (
             <div
               key={mentor.id}
-              className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft hover:shadow-card transition-all flex flex-col justify-between"
+              className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft hover:shadow-card transition-all flex flex-col justify-between"
             >
               <div>
                 {/* Header: Avatar, Name, Verified Badge */}
@@ -307,12 +284,12 @@ export const FindMentors = () => {
                 </div>
 
                 {/* Available Slots Preview */}
-                <div className="bg-slate-50 rounded-2xl p-3 mb-4">
+                <div className="bg-slate-50/80 rounded-2xl p-3 mb-4">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1.5">
                     <span className="flex items-center gap-1 text-brand-maroon">
                       <Calendar className="w-3.5 h-3.5" /> Next Available Slots:
                     </span>
-                    <span className="text-emerald-600 font-bold text-[10px]">Free 1:1</span>
+                    <span className="text-brand-rose font-bold text-[10px]">Free Trial Eligible</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {mentor.availableSlots.slice(0, 3).map((slot) => (
@@ -327,15 +304,11 @@ export const FindMentors = () => {
                 </div>
               </div>
 
-              {/* Bottom Actions */}
+              {/* Bottom Actions (No star rating numbers) */}
               <div className="pt-4 border-t border-rose-50 flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-500">
-                  <Star className="w-4 h-4 fill-current" />
-                  <span className="text-slate-900">{mentor.rating}</span>
-                  <span className="text-slate-400 font-normal">
-                    ({mentor.reviewCount} reviews • {mentor.sessionsCompleted} sessions)
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-slate-600">
+                  {mentor.sessionsCompleted}+ sessions conducted
+                </span>
 
                 <div className="flex items-center gap-2">
                   <button

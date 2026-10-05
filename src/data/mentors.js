@@ -13,7 +13,6 @@ export const INITIAL_MENTORS = [
     verified: true,
     verificationMethod: "Verified via College Email (@iiserkol.ac.in)",
     verificationDate: "August 2026",
-    rating: 4.95,
     reviewCount: 38,
     sessionsCompleted: 46,
     avatarBg: "from-rose-500 to-rose-700",
@@ -31,8 +30,7 @@ export const INITIAL_MENTORS = [
       { exam: "JEE Advanced", rankScore: "Qualified", year: "2026" },
       { exam: "JEE Main", rankScore: "98.9%ile", year: "2026" }
     ],
-    hourlyRate: "Free Mentorship",
-    isFree: true,
+    pricingNote: "Free Trial eligible • Sample pricing thereafter",
     languages: ["English", "Hindi"],
     availableSlots: [
       { day: "Today", time: "6:00 PM - 6:45 PM", id: "slot-101" },
@@ -46,7 +44,6 @@ export const INITIAL_MENTORS = [
         id: "rev-1",
         studentName: "Aparna Tiwari",
         college: "ABES EC Ghaziabad",
-        rating: 5,
         date: "2 days ago",
         comment: "Bhanu bhaiya cleared all my confusions regarding pure science vs engineering research. His timetable framework has already reduced my exam anxiety!"
       },
@@ -54,7 +51,6 @@ export const INITIAL_MENTORS = [
         id: "rev-2",
         studentName: "Devansh Rastogi",
         college: "Delhi Public School",
-        rating: 5,
         date: "Last week",
         comment: "Amazing insights on IAT test pattern and how questions test depth over memorization. Best guidance session I've attended."
       },
@@ -62,7 +58,6 @@ export const INITIAL_MENTORS = [
         id: "rev-3",
         studentName: "Tanvi Sharma",
         college: "Class 12 Aspirant",
-        rating: 4.9,
         date: "2 weeks ago",
         comment: "Very patient listener. Gave realistic advice on managing boards alongside JEE/IAT prep."
       }
@@ -82,7 +77,6 @@ export const INITIAL_MENTORS = [
     verified: true,
     verificationMethod: "Verified via College Email (@nitk.edu.in)",
     verificationDate: "August 2026",
-    rating: 4.92,
     reviewCount: 42,
     sessionsCompleted: 52,
     avatarBg: "from-amber-600 to-rose-600",
@@ -99,8 +93,7 @@ export const INITIAL_MENTORS = [
       { exam: "JEE Main", rankScore: "AIR 4,120 (99.4%ile)", year: "2026" },
       { exam: "JEE Advanced", rankScore: "AIR 6,850", year: "2026" }
     ],
-    hourlyRate: "Free Mentorship",
-    isFree: true,
+    pricingNote: "Free Trial eligible • Sample pricing thereafter",
     languages: ["English", "Hindi", "Gujarati"],
     availableSlots: [
       { day: "Today", time: "8:00 PM - 8:45 PM", id: "slot-201" },
@@ -113,7 +106,6 @@ export const INITIAL_MENTORS = [
         id: "rev-201",
         studentName: "Rohan Verma",
         college: "Class 12 JEE Aspirant",
-        rating: 5,
         date: "3 days ago",
         comment: "Akash broke down the difference between ECE curriculum and CSE reality. No sugarcoating, just pure practical truth."
       },
@@ -121,7 +113,6 @@ export const INITIAL_MENTORS = [
         id: "rev-202",
         studentName: "Ananya Dixit",
         college: "KIET Ghaziabad",
-        rating: 4.8,
         date: "1 week ago",
         comment: "Great tips on Physics numerical problem-solving and handling negative marks."
       }
@@ -141,7 +132,6 @@ export const INITIAL_MENTORS = [
     verified: true,
     verificationMethod: "Verified via College Email (@nitk.edu.in)",
     verificationDate: "August 2026",
-    rating: 4.88,
     reviewCount: 31,
     sessionsCompleted: 39,
     avatarBg: "from-rose-600 to-red-800",
@@ -158,8 +148,7 @@ export const INITIAL_MENTORS = [
       { exam: "JEE Main", rankScore: "98.4%ile", year: "2026" },
       { exam: "MHT-CET", rankScore: "99.2%ile", year: "2026" }
     ],
-    hourlyRate: "Free Mentorship",
-    isFree: true,
+    pricingNote: "Free Trial eligible • Sample pricing thereafter",
     languages: ["English", "Hindi", "Marathi"],
     availableSlots: [
       { day: "Tomorrow", time: "4:00 PM - 4:45 PM", id: "slot-301" },
@@ -171,7 +160,6 @@ export const INITIAL_MENTORS = [
         id: "rev-301",
         studentName: "Karthik Nair",
         college: "Govt HSS Kerala",
-        rating: 5,
         date: "5 days ago",
         comment: "Helped me prioritize JoSAA preferences when I had borderline rank. Genuine senior who cares!"
       }
@@ -191,7 +179,6 @@ export const INITIAL_MENTORS = [
     verified: true,
     verificationMethod: "Verified via College Email (@nitk.edu.in)",
     verificationDate: "August 2026",
-    rating: 4.86,
     reviewCount: 29,
     sessionsCompleted: 35,
     avatarBg: "from-red-600 to-rose-900",
@@ -208,8 +195,7 @@ export const INITIAL_MENTORS = [
       { exam: "JEE Main", rankScore: "98.2%ile", year: "2026" },
       { exam: "KCET", rankScore: "Rank 810", year: "2026" }
     ],
-    hourlyRate: "Free Mentorship",
-    isFree: true,
+    pricingNote: "Free Trial eligible • Sample pricing thereafter",
     languages: ["English", "Kannada", "Hindi"],
     availableSlots: [
       { day: "Today", time: "7:00 PM - 7:45 PM", id: "slot-401" },
@@ -221,7 +207,6 @@ export const INITIAL_MENTORS = [
         id: "rev-401",
         studentName: "Mohd. Zeeshan",
         college: "Class 12 Aspirant",
-        rating: 5,
         date: "4 days ago",
         comment: "Vineeth bhaiya's revision formula helped me turn my Mock Math score from 28 to 64. Inspiring session."
       }
@@ -241,7 +226,6 @@ export const INITIAL_MENTORS = [
     verified: true,
     verificationMethod: "Verified via College Email (@nitk.edu.in)",
     verificationDate: "August 2026",
-    rating: 4.96,
     reviewCount: 47,
     sessionsCompleted: 58,
     avatarBg: "from-rose-500 to-pink-700",
@@ -258,8 +242,7 @@ export const INITIAL_MENTORS = [
       { exam: "JEE Main", rankScore: "AIR 3,890 (99.5%ile)", year: "2026" },
       { exam: "JEE Advanced", rankScore: "AIR 5,420", year: "2026" }
     ],
-    hourlyRate: "Free Mentorship",
-    isFree: true,
+    pricingNote: "Free Trial eligible • Sample pricing thereafter",
     languages: ["English", "Hindi"],
     availableSlots: [
       { day: "Today", time: "5:30 PM - 6:15 PM", id: "slot-501" },
@@ -272,7 +255,6 @@ export const INITIAL_MENTORS = [
         id: "rev-501",
         studentName: "Aparna Tiwari",
         college: "ABES EC Ghaziabad",
-        rating: 5,
         date: "1 week ago",
         comment: "Mausmi di gave me tremendous confidence! She explained how to build a strong portfolio in college while keeping GPA high."
       },
@@ -280,7 +262,6 @@ export const INITIAL_MENTORS = [
         id: "rev-502",
         studentName: "Pooja Hegde",
         college: "Class 12 Aspirant",
-        rating: 5,
         date: "2 weeks ago",
         comment: "Detailed breakdown of JoSAA counseling female pool seats and how to balance physics problems."
       }

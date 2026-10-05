@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { MentorLogo } from '../common/MentorLogo';
 import {
   LayoutDashboard,
   Search,
@@ -14,17 +15,16 @@ import {
   Clock,
   Inbox,
   Users,
-  Star,
   ShieldCheck,
   UserCheck,
   Sparkles,
   ArrowRight,
   X,
-  Compass
+  CreditCard
 } from 'lucide-react';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { role, currentMentor, studentUser, switchDemoMentor, mentors } = useApp();
+  const { role, currentMentor, studentUser, mentors } = useApp();
   const navigate = useNavigate();
 
   const isStudent = role === 'student';
@@ -37,6 +37,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { to: '/student/resources', label: 'Resources', icon: BookOpen },
     { to: '/student/planner', label: 'Roadmap & Planner', icon: CheckSquare },
     { to: '/student/progress', label: 'Feedback & Progress', icon: TrendingUp },
+    { to: '/student/billing', label: 'Plans & Billing', icon: CreditCard },
     { to: '/student/profile', label: 'Student Profile', icon: User },
     { to: '/student/notifications', label: 'Notifications', icon: Bell },
   ];
@@ -49,7 +50,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { to: '/mentor/students', label: 'My Students', icon: Users },
     { to: '/mentor/messages', label: 'Messages', icon: MessageSquare },
     { to: '/mentor/resources', label: 'Shared Resources', icon: BookOpen },
-    { to: '/mentor/reviews', label: 'Reviews & Ratings', icon: Star },
+    { to: '/mentor/reviews', label: 'Feedback', icon: MessageSquare },
     { to: '/mentor/verification', label: 'Verification Status', icon: ShieldCheck },
     { to: '/mentor/profile', label: 'Mentor Profile', icon: UserCheck },
     { to: '/mentor/notifications', label: 'Notifications', icon: Bell },
@@ -63,31 +64,29 @@ export const Sidebar = ({ isOpen, onClose }) => {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 lg:hidden"
         />
       )}
 
       {/* Sidebar Drawer */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-72 bg-white/95 backdrop-blur-lg border-r border-rose-100 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-40 w-72 bg-white/80 backdrop-blur-xl border-r border-white/80 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="p-5 border-b border-rose-50 flex items-center justify-between">
+        {/* Brand Header with Line-Art Logo and Tagline */}
+        <div className="p-5 border-b border-rose-100/60 flex items-center justify-between">
           <div
             onClick={() => navigate('/')}
             className="cursor-pointer group flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-rose to-brand-maroon flex items-center justify-center text-white shadow-soft group-hover:scale-105 transition-transform">
-              <Compass className="w-5 h-5 text-white" />
-            </div>
+            <MentorLogo className="w-9 h-9" />
             <div>
-              <h1 className="font-bold text-lg text-slate-900 tracking-tight leading-none group-hover:text-brand-rose transition-colors">
+              <h1 className="font-extrabold text-base text-slate-900 tracking-tight leading-none group-hover:text-brand-rose transition-colors">
                 It's Your App
               </h1>
-              <p className="text-[10px] text-brand-rose font-semibold tracking-wider uppercase mt-1">
-                Conceive • Create • Impact
+              <p className="text-[10px] text-brand-rose font-bold tracking-tight mt-1">
+                Made by mentors, built for you
               </p>
             </div>
           </div>
@@ -150,8 +149,8 @@ export const Sidebar = ({ isOpen, onClose }) => {
           })}
         </div>
 
-        {/* Verification Guarantee & Pitch deck stat footer card */}
-        <div className="p-4 border-t border-rose-100 bg-white">
+        {/* Verification Guarantee Footer Card */}
+        <div className="p-4 border-t border-rose-100 bg-white/60">
           <div className="bg-brand-blush/60 border border-rose-200/70 rounded-2xl p-3 text-xs">
             <div className="flex items-center gap-2 text-brand-maroon font-bold">
               <ShieldCheck className="w-4 h-4 text-brand-rose" />

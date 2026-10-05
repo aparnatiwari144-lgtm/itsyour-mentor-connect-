@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   Video,
-  Star,
   MessageSquare,
   CheckCircle2,
   Users,
@@ -163,14 +162,7 @@ export const MentorSessions = () => {
 
                 {session.status === 'completed' && session.review && (
                   <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <div className="flex items-center text-amber-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3.5 h-3.5 ${i < session.rating ? 'fill-current' : 'text-slate-200'}`}
-                        />
-                      ))}
-                    </div>
+                    <span className="font-semibold text-slate-700">Mentee Feedback:</span>
                     <span className="italic text-[11px] truncate max-w-xs">"{session.review}"</span>
                   </div>
                 )}

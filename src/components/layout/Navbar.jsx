@@ -67,7 +67,7 @@ export const Navbar = ({ onToggleSidebar }) => {
   const activeUser = isStudent ? studentUser : currentMentor;
 
   return (
-    <header className="sticky top-0 z-30 bg-[#FBE9EA]/90 backdrop-blur-md border-b border-rose-200/50 px-4 sm:px-6 py-3">
+    <header className="sticky top-0 z-30 bg-white/75 backdrop-blur-xl border-b border-white/70 px-4 sm:px-6 py-3 shadow-2xs">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Mobile hamburger & breadcrumb */}
         <div className="flex items-center gap-3">

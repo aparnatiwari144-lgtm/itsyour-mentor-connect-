@@ -3,9 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AppLayout } from './components/layout/AppLayout';
 
-// Public Pages
+// Public Single-Page Entry
 import { LandingPage } from './pages/LandingPage';
-import { LoginPage } from './pages/LoginPage';
 
 // Shared Pages
 import { VideoCallRoom } from './pages/common/VideoCallRoom';
@@ -22,6 +21,7 @@ import { MySessions } from './pages/student/MySessions';
 import { RoadmapPlanner } from './pages/student/RoadmapPlanner';
 import { StudentProfile } from './pages/student/StudentProfile';
 import { StudentProgress } from './pages/student/StudentProgress';
+import { PlansBilling } from './pages/student/PlansBilling';
 
 // Mentor Pages
 import { MentorDashboard } from './pages/mentor/MentorDashboard';
@@ -38,11 +38,12 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Single-Page Entry (Hero + 2 Login Cards + Stats Row) */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          {/* Old login route redirected to "/" */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
 
-          {/* Fullscreen Video Call Room (Accessible from both tracks) */}
+          {/* Fullscreen Video Call Room */}
           <Route path="/student/call/:sessionId" element={<VideoCallRoom />} />
           <Route path="/mentor/call/:sessionId" element={<VideoCallRoom />} />
 
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="messages" element={<MessagesPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="planner" element={<RoadmapPlanner />} />
+            <Route path="billing" element={<PlansBilling />} />
             <Route path="profile" element={<StudentProfile />} />
             <Route path="progress" element={<StudentProgress />} />
             <Route path="notifications" element={<NotificationsPage />} />
@@ -73,6 +75,7 @@ export default function App() {
             <Route path="messages" element={<MessagesPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="reviews" element={<MentorReviews />} />
+            <Route path="feedback" element={<MentorReviews />} />
             <Route path="verification" element={<VerificationStatus />} />
             <Route path="profile" element={<MentorProfileEditor />} />
             <Route path="notifications" element={<NotificationsPage />} />

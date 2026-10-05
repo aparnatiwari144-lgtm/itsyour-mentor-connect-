@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import {
   ShieldCheck,
-  Star,
   Calendar,
   MessageSquare,
   Award,
@@ -33,7 +32,7 @@ export const MentorProfile = () => {
       </button>
 
       {/* Hero Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-rose-100 shadow-card">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/80 shadow-card">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-brand-rose to-brand-maroon text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-card shrink-0">
@@ -86,27 +85,24 @@ export const MentorProfile = () => {
           </div>
         </div>
 
-        {/* Quick Stats Grid */}
+        {/* Quick Stats Grid (No Star Ratings) */}
         <div className="mt-8 pt-6 border-t border-rose-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="bg-slate-50/70 p-3 rounded-2xl">
-            <div className="flex items-center justify-center gap-1 text-amber-500 font-bold text-lg">
-              <Star className="w-4 h-4 fill-current" />
-              <span className="text-slate-900">{mentor.rating}</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">({mentor.reviewCount} mentee reviews)</p>
-          </div>
-
-          <div className="bg-slate-50/70 p-3 rounded-2xl">
+          <div className="bg-slate-50/80 p-3 rounded-2xl">
             <p className="text-lg font-bold text-slate-900">{mentor.sessionsCompleted}+</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Sessions Conducted</p>
           </div>
 
-          <div className="bg-slate-50/70 p-3 rounded-2xl">
-            <p className="text-lg font-bold text-emerald-600">100% Free</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Community Mentorship</p>
+          <div className="bg-slate-50/80 p-3 rounded-2xl">
+            <p className="text-lg font-bold text-brand-rose">{mentor.reviews.length} Notes</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Mentee Reviews</p>
           </div>
 
-          <div className="bg-slate-50/70 p-3 rounded-2xl">
+          <div className="bg-slate-50/80 p-3 rounded-2xl">
+            <p className="text-lg font-bold text-emerald-600">Free Trial</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">1st Session on Us</p>
+          </div>
+
+          <div className="bg-slate-50/80 p-3 rounded-2xl">
             <p className="text-lg font-bold text-brand-maroon">{mentor.languages.join(', ')}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Languages Spoken</p>
           </div>
@@ -118,7 +114,7 @@ export const MentorProfile = () => {
         {/* Left 2 Cols: Detailed Bio, Expertise, Exam Records */}
         <div className="lg:col-span-2 space-y-6">
           {/* About & Bio */}
-          <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
             <h3 className="font-bold text-base text-slate-900">About Senior Mentor</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
               {mentor.bio}
@@ -142,7 +138,7 @@ export const MentorProfile = () => {
           </div>
 
           {/* Exam Experience Card */}
-          <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft">
             <div className="flex items-center gap-2 mb-4">
               <Award className="w-5 h-5 text-brand-rose" />
               <h3 className="font-bold text-base text-slate-900">Entrance Exams Cracked</h3>
@@ -162,35 +158,30 @@ export const MentorProfile = () => {
             </div>
           </div>
 
-          {/* Student Reviews */}
-          <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft space-y-4">
+          {/* Student Written Reviews (No star numbers) */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-base text-slate-900">
-                Verified Mentee Reviews ({mentor.reviews.length})
+                Verified Mentee Feedback ({mentor.reviews.length})
               </h3>
-              <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
-                <Star className="w-4 h-4 fill-current" />
-                <span>{mentor.rating} out of 5</span>
-              </div>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Domain Verified Feedback
+              </span>
             </div>
 
             <div className="space-y-3">
               {mentor.reviews.map((rev) => (
-                <div key={rev.id} className="bg-slate-50/70 rounded-2xl p-4 border border-slate-100">
+                <div key={rev.id} className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <span className="text-xs font-bold text-slate-900">{rev.studentName}</span>
                       <span className="text-[10px] text-slate-500 ml-2 font-medium">{rev.college}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
-                      <Star className="w-3 h-3 fill-current" />
-                      <span>{rev.rating}</span>
-                    </div>
+                    <span className="text-[10px] text-slate-400">{rev.date}</span>
                   </div>
                   <p className="text-xs text-slate-600 mt-2 leading-relaxed italic">
                     "{rev.comment}"
                   </p>
-                  <span className="text-[10px] text-slate-400 mt-2 block">{rev.date}</span>
                 </div>
               ))}
             </div>
@@ -199,7 +190,7 @@ export const MentorProfile = () => {
 
         {/* Right Col: Available Slots & Booking Trigger */}
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-soft sticky top-20 space-y-5">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-soft sticky top-20 space-y-5">
             <div>
               <div className="flex items-center gap-2 text-brand-maroon font-bold text-sm">
                 <Calendar className="w-4 h-4 text-brand-rose" />
@@ -231,7 +222,7 @@ export const MentorProfile = () => {
             <div className="pt-2">
               <button
                 onClick={() => navigate(`/student/book/${mentor.id}`)}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-brand-rose to-brand-maroon hover:from-brand-roseHover hover:to-brand-maroonHover text-white font-bold text-xs sm:text-sm shadow-card transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-full bg-gradient-to-r from-brand-rose to-brand-maroon hover:from-brand-roseHover hover:to-brand-maroonHover text-white font-bold text-xs sm:text-sm shadow-card transition-all flex items-center justify-center gap-2"
               >
                 Proceed to Book Session
               </button>
@@ -240,7 +231,7 @@ export const MentorProfile = () => {
             <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-2xl text-[11px] text-emerald-800 flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                Free community session. No payment or credit card required. Confirmation is instant.
+                1 Free Trial session on us. Flexible sample packs thereafter (Sample pricing - prototype).
               </span>
             </div>
           </div>
