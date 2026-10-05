@@ -5,13 +5,50 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23B3263E'/><path d='M30 65 L50 30 L70 65 Z' fill='%23FFFFFF'/><circle cx='50' cy='62' r='6' fill='%237A1530'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>It's Your App | Conceive • Create • Impact</title>
+    
+    <!-- Auto-redirect to Vite dev server if opened through VS Code Live Server (port 5500) -->
+    <script>
+      (function() {
+        const port = window.location.port;
+        const host = window.location.hostname;
+        // If opened via VS Code Live Server (port 5500, 5501) or file protocol
+        if (port === '5500' || port === '5501' || (host === '127.0.0.1' && port !== '5173') || window.location.protocol === 'file:') {
+          console.log("Detected static server / VS Code Live Server. Redirecting to Vite Dev Server at http://localhost:5173/ ...");
+          window.location.replace('http://localhost:5173/');
+        }
+      })();
+    </script>
+
     <!-- Google Fonts: Poppins & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body class="bg-[#FBE9EA] text-slate-800 font-poppins antialiased selection:bg-[#B3263E] selection:text-white min-h-screen">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback card in case opened on static server without Vite compilation -->
+      <div style="font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #FBE9EA; color: #2D3139; padding: 24px; text-align: center;">
+        <div style="background: white; border-radius: 24px; padding: 36px; max-width: 460px; width: 100%; box-shadow: 0 10px 30px rgba(122, 21, 48, 0.08); border: 1px solid rgba(179, 38, 62, 0.1);">
+          <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #B3263E, #7A1530); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; margin: 0 auto 16px; box-shadow: 0 4px 15px rgba(179, 38, 62, 0.25);">
+            IY
+          </div>
+          <h2 style="font-size: 22px; font-weight: 800; color: #1e293b; margin: 0 0 6px 0;">It's Your App</h2>
+          <p style="font-size: 11px; font-weight: 700; color: #B3263E; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 16px 0;">
+            Conceive | Create | Impact
+          </p>
+          <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin: 0 0 24px 0;">
+            This React platform is currently running on the Vite development server at <strong style="color: #1e293b;">localhost:5173</strong>.
+          </p>
+          <a href="http://localhost:5173" style="display: block; width: 100%; box-sizing: border-box; background: linear-gradient(to right, #B3263E, #7A1530); color: white; font-weight: 700; font-size: 14px; padding: 14px 24px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 14px rgba(179, 38, 62, 0.35);">
+            🚀 Open App at http://localhost:5173 →
+          </a>
+          <div style="margin-top: 20px; padding: 12px 16px; background: #FFF6F7; border-radius: 14px; border: 1px solid #F5D7DA; text-align: left; font-size: 11px; color: #7A1530; line-height: 1.5;">
+            <strong>Why did you see this?</strong><br>
+            You opened this file using VS Code Live Server (Port 5500). Vite React projects need Vite's dev server to compile JSX components. Please visit <strong>http://localhost:5173</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
