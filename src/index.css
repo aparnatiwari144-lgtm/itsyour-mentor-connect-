@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FBE9EA;
+    color: #2D3139;
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom friendly scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F8E2E5;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5B2BB;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B3263E;
+}
+
+/* Glassmorphism and soft card styles */
+.card-glass {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(179, 38, 62, 0.08);
+}
+
+.glow-rose {
+  box-shadow: 0 0 25px -5px rgba(179, 38, 62, 0.25);
+}
+
+/* Pulse animation for live indicators */
+@keyframes softPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.animate-soft-pulse {
+  animation: softPulse 2.5s infinite ease-in-out;
+}
